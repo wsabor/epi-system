@@ -30,9 +30,7 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const epiSelecionado = epis.find(
-      (epi) => epi.id === parseInt(formData.epiId)
-    );
+    const epiSelecionado = epis.find((epi) => epi.id === formData.epiId);
 
     if (!epiSelecionado) {
       alert("Selecione um EPI válido");
@@ -41,7 +39,7 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
 
     const movimentacao = {
       id: Date.now(),
-      epiId: parseInt(formData.epiId),
+      epiId: formData.epiId,
       epiDescricao: epiSelecionado.descricao,
       tipo: formData.tipoMovimentacao,
       quantidade: parseInt(formData.quantidade),
@@ -73,9 +71,7 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
 
   if (!isOpen) return null;
 
-  const epiSelecionado = epis.find(
-    (epi) => epi.id === parseInt(formData.epiId)
-  );
+  const epiSelecionado = epis.find((epi) => epi.id === formData.epiId);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
