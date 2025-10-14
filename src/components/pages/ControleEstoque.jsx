@@ -22,6 +22,7 @@ const ControleEstoque = ({
   onEditEPI,
   onDeleteEPI,
   onMovimentacao,
+  onViewEPI,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -252,6 +253,7 @@ const ControleEstoque = ({
                             <TrendingUp size={16} />
                           </button>
                           <button
+                            onClick={() => onViewEPI(epi)}
                             className="text-green-600 hover:text-green-900 p-1"
                             title="Visualizar"
                           >

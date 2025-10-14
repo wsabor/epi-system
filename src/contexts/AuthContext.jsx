@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile,
+} from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../services/firebase";
 
 const AuthContext = createContext();
@@ -32,15 +40,67 @@ export const AuthProvider = ({ children }) => {
         await setDoc(userRef, {
           nome: user.displayName,
           email: user.email,
-          permissao: "operador", // Padrão
+          permissao: "operador", // Padrão para novos usuários
           ativo: true,
-          createdAt: new Date(),
+          createdAt: serverTimestamp(),
         });
       }
 
       return user;
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("Erro no login com Google:", error);
+      throw error;
+    }
+  };
+
+  // Login com Email/Senha
+  const loginWithEmail = async (email, password) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return result.user;
+    } catch (error) {
+      console.error("Erro no login com email:", error);
+      throw error;
+    }
+  };
+
+  // Cadastrar novo usuário com Email/Senha
+  const registerWithEmail = async (email, password, nome) => {
+    try {
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = result.user;
+
+      // Atualizar perfil com nome
+      await updateProfile(user, {
+        displayName: nome,
+      });
+
+      // Criar documento no Firestore
+      await setDoc(doc(db, "usuarios", user.uid), {
+        nome: nome,
+        email: email,
+        permissao: "operador", // Padrão para novos usuários
+        ativo: true,
+        createdAt: serverTimestamp(),
+      });
+
+      return user;
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
+      throw error;
+    }
+  };
+
+  // Resetar senha
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error("Erro ao resetar senha:", error);
       throw error;
     }
   };
@@ -64,10 +124,39 @@ export const AuthProvider = ({ children }) => {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
+          const userData = userDoc.data();
+
+          // Verificar se usuário está ativo
+          if (!userData.ativo) {
+            await signOut(auth);
+            setCurrentUser(null);
+            setLoading(false);
+            return;
+          }
+
           setCurrentUser({
             uid: user.uid,
             email: user.email,
-            ...userDoc.data(),
+            nome: user.displayName || userData.nome,
+            permissao: userData.permissao || "operador",
+            ativo: userData.ativo,
+          });
+        } else {
+          // Usuário existe no Auth mas não no Firestore - criar documento
+          await setDoc(userRef, {
+            nome: user.displayName || "Usuário",
+            email: user.email,
+            permissao: "operador",
+            ativo: true,
+            createdAt: serverTimestamp(),
+          });
+
+          setCurrentUser({
+            uid: user.uid,
+            email: user.email,
+            nome: user.displayName || "Usuário",
+            permissao: "operador",
+            ativo: true,
           });
         }
       } else {
@@ -82,6 +171,9 @@ export const AuthProvider = ({ children }) => {
   const value = {
     currentUser,
     loginWithGoogle,
+    loginWithEmail,
+    registerWithEmail,
+    resetPassword,
     logout,
     loading,
   };

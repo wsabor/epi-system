@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "./contexts/AuthContext";
 import { Users, FileText } from "lucide-react";
 
 // Components
@@ -9,6 +10,7 @@ import ControleEstoque from "./components/pages/ControleEstoque";
 import Movimentacoes from "./components/pages/Movimentacoes";
 import EPIModal from "./components/modals/EPIModal";
 import MovimentacaoModal from "./components/modals/MovimentacaoModal";
+import EPIDetalhesModal from "./components/modals/EPIDetalhesModal";
 
 // Hooks
 import { useEPIs } from "./hooks/useEPIs";
@@ -18,6 +20,8 @@ const App = () => {
   // Estados de navegação
   const [currentView, setCurrentView] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const { currentUser } = useAuth();
 
   // Dados do Firebase via hooks customizados
   const {
@@ -33,17 +37,11 @@ const App = () => {
     addMovimentacao,
   } = useMovimentacoes();
 
-  // Usuário atual (temporário - virá do AuthContext depois)
-  const [currentUser] = useState({
-    nome: "João Silva",
-    email: "joao.silva@senaisp.edu.br",
-    permissao: "administrador",
-  });
-
   // Estados dos modais
   const [showAddEPI, setShowAddEPI] = useState(false);
   const [showMovimentacao, setShowMovimentacao] = useState(false);
   const [editingEPI, setEditingEPI] = useState(null);
+  const [viewingEPI, setViewingEPI] = useState(null);
 
   // Handlers para EPIs
   const handleSaveEPI = async (epiData) => {
@@ -187,6 +185,7 @@ const App = () => {
               onEditEPI={(epi) => setEditingEPI(epi)}
               onDeleteEPI={handleDeleteEPI}
               onMovimentacao={() => setShowMovimentacao(true)}
+              onViewEPI={(epi) => setViewingEPI(epi)}
             />
           )}
 
@@ -241,6 +240,11 @@ const App = () => {
         epis={epis}
         currentUser={currentUser}
         onSave={handleSaveMovimentacao}
+      />
+      <EPIDetalhesModal
+        isOpen={!!viewingEPI}
+        onClose={() => setViewingEPI(null)}
+        epi={viewingEPI}
       />
     </div>
   );

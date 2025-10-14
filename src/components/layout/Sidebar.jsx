@@ -1,4 +1,6 @@
 import React from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   Package,
@@ -23,6 +25,18 @@ const Sidebar = ({
     { id: "usuarios", icon: Users, label: "Usuários" },
   ];
 
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+  };
+
   const handleMenuClick = (itemId) => {
     setCurrentView(itemId);
     setSidebarOpen(false);
@@ -37,7 +51,7 @@ const Sidebar = ({
       {/* Header do Sidebar */}
       <div className="flex items-center justify-between p-4 border-b border-red-500">
         <div className="flex items-center space-x-3">
-          <div className="w-14 h-10 bg-white rounded flex items-center justify-center">
+          <div className="w-16 h-10 bg-white rounded flex items-center justify-center">
             <span className="text-red-600 font-bold text-xs">SENAI</span>
           </div>
           <div className="text-white">
@@ -79,7 +93,10 @@ const Sidebar = ({
 
       {/* Botão de Sair */}
       <div className="absolute bottom-4 left-4 right-4">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-500 rounded-lg transition-colors">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-500 rounded-lg transition-colors"
+        >
           <LogOut size={20} className="text-white" />
           <span className="text-white font-medium">Sair</span>
         </button>
