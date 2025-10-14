@@ -8,6 +8,9 @@ import Sidebar from "./components/layout/Sidebar";
 import Dashboard from "./components/pages/Dashboard";
 import ControleEstoque from "./components/pages/ControleEstoque";
 import Movimentacoes from "./components/pages/Movimentacoes";
+import Relatorios from "./components/pages/Relatorios";
+
+//Modais
 import EPIModal from "./components/modals/EPIModal";
 import MovimentacaoModal from "./components/modals/MovimentacaoModal";
 import EPIDetalhesModal from "./components/modals/EPIDetalhesModal";
@@ -197,15 +200,7 @@ const App = () => {
           )}
 
           {currentView === "relatorios" && (
-            <div className="text-center py-12">
-              <FileText size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Relatórios
-              </h3>
-              <p className="text-gray-600">
-                Funcionalidade em desenvolvimento...
-              </p>
-            </div>
+            <Relatorios epis={epis} movimentacoes={movimentacoes} />
           )}
 
           {currentView === "usuarios" && (
