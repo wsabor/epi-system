@@ -48,33 +48,24 @@ const App = () => {
   // Handlers para EPIs
   const handleSaveEPI = async (epiData) => {
     try {
-      console.log("🔍 handleSaveEPI - Dados recebidos:", epiData);
-
       if (epiData.id && epis.find((e) => e.id === epiData.id)) {
-        console.log("✏️ Editando EPI existente, ID:", epiData.id);
-        await updateEPI(String(epiData.id), epiData);
+        // Editar EPI existente
+        await updateEPI(epiData.id, epiData);
       } else {
-        console.log("➕ Adicionando novo EPI");
+        // Adicionar novo EPI
         await addEPI(epiData);
       }
       setShowAddEPI(false);
       setEditingEPI(null);
-      console.log("✅ EPI salvo com sucesso!");
     } catch (error) {
-      console.error("❌ Erro em handleSaveEPI:");
-      console.error("Tipo do erro:", typeof error);
-      console.error("Mensagem:", error?.message);
-      console.error("Código:", error?.code);
-      console.error("Nome:", error?.name);
-      console.error("Objeto completo:", error);
-      alert("Erro ao salvar EPI: " + (error?.message || "Erro desconhecido"));
+      alert("Erro ao salvar EPI: " + error.message);
     }
   };
 
   const handleDeleteEPI = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir este EPI?")) {
       try {
-        await deleteEPI(String(id)); // Garantir que é string
+        await deleteEPI(id);
       } catch (error) {
         alert("Erro ao excluir EPI: " + error.message);
       }

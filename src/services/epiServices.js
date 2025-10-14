@@ -5,7 +5,6 @@ import {
   deleteDoc,
   doc,
   getDocs,
-  getDoc,
   query,
   orderBy,
   serverTimestamp,
@@ -78,35 +77,21 @@ export const createEPI = async (epiData) => {
 // Atualizar EPI
 export const updateEPI = async (id, epiData) => {
   try {
-    console.log("🔍 DEBUG - Iniciando atualização");
-    console.log("📝 ID:", id, "Tipo:", typeof id);
-
     // Garantir que id é uma string
     const docId = String(id);
     const epiRef = doc(db, "epis", docId);
 
-    const docSnap = await getDoc(epiRef);
-    if (!docSnap.exists()) {
-      throw new Error(
-        `Documento com ID ${docId} não existe no Firestore. Esse EPI pode ter sido criado apenas localmente.`
-      );
-    }
-
-    console.log("✅ Documento existe no Firestore");
-
     // Remover campos que não devem ser atualizados
     const { id: _, createdAt, updatedAt, status, ...dataToUpdate } = epiData;
-    console.log("📝 Dados a atualizar:", JSON.stringify(dataToUpdate, null, 2));
 
     await updateDoc(epiRef, {
       ...dataToUpdate,
       updatedAt: serverTimestamp(),
     });
 
-    console.log("✅ EPI atualizado com sucesso!");
     return { id: docId, ...epiData };
   } catch (error) {
-    console.error("❌ Erro ao atualizar EPI:", error.message);
+    console.error("Erro ao atualizar EPI:", error);
     throw error;
   }
 };
