@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useAuth } from "./contexts/AuthContext";
-import { Users, FileText } from "lucide-react";
 
 // Components
 import Header from "./components/layout/Header";
@@ -10,6 +9,7 @@ import ControleEstoque from "./components/pages/ControleEstoque";
 import Movimentacoes from "./components/pages/Movimentacoes";
 import Relatorios from "./components/pages/Relatorios";
 import Usuarios from "./components/pages/Usuarios/Usuarios";
+import AuthWrapper from "./components/auth/AuthWrapper";
 
 //Modais
 import EPIModal from "./components/modals/EPIModal";
@@ -21,11 +21,12 @@ import { useEPIs } from "./hooks/useEPIs";
 import { useMovimentacoes } from "./hooks/useMovimentacoes";
 
 const App = () => {
+  // Auth
+  const { currentUser, userProfile, loading: authLoading } = useAuth();
+
   // Estados de navegação
   const [currentView, setCurrentView] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const { currentUser } = useAuth();
 
   // Dados do Firebase via hooks customizados
   const {
@@ -88,7 +89,7 @@ const App = () => {
         funcionarioRecebeu: movimentacaoData.funcionarioRecebeu || "",
         motivo: movimentacaoData.motivo,
         observacoes: movimentacaoData.observacoes || "",
-        userId: "user-123", // Temporário - virá do AuthContext
+        userId: currentUser?.uid || "unknown",
       });
 
       // Calcular nova quantidade
@@ -141,7 +142,30 @@ const App = () => {
     }).length;
   };
 
-  // Loading state
+  // Verificar permissões
+  const canAccessUsuarios = userProfile?.role === "admin";
+  const canEditEPIs =
+    userProfile?.role === "admin" || userProfile?.role === "operador";
+  const canViewReports = userProfile?.role !== undefined;
+
+  // Loading state da autenticação
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não estiver autenticado, mostra telas de login/registro
+  if (!currentUser) {
+    return <AuthWrapper />;
+  }
+
+  // Loading state dos dados
   if (loadingEPIs || loadingMovimentacoes) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -160,6 +184,7 @@ const App = () => {
         setSidebarOpen={setSidebarOpen}
         currentView={currentView}
         setCurrentView={setCurrentView}
+        userRole={userProfile?.role}
       />
 
       {/* Overlay para mobile */}
@@ -177,6 +202,7 @@ const App = () => {
           setSidebarOpen={setSidebarOpen}
           alertas={calcularAlertas()}
           currentUser={currentUser}
+          userProfile={userProfile}
         />
 
         <main className="flex-1 p-6">
@@ -185,48 +211,66 @@ const App = () => {
           {currentView === "estoque" && (
             <ControleEstoque
               epis={epis}
-              onAddEPI={() => setShowAddEPI(true)}
-              onEditEPI={(epi) => setEditingEPI(epi)}
-              onDeleteEPI={handleDeleteEPI}
-              onMovimentacao={() => setShowMovimentacao(true)}
+              onAddEPI={() => canEditEPIs && setShowAddEPI(true)}
+              onEditEPI={(epi) => canEditEPIs && setEditingEPI(epi)}
+              onDeleteEPI={canEditEPIs ? handleDeleteEPI : null}
+              onMovimentacao={() => canEditEPIs && setShowMovimentacao(true)}
               onViewEPI={(epi) => setViewingEPI(epi)}
+              canEdit={canEditEPIs}
             />
           )}
 
           {currentView === "movimentacoes" && (
             <Movimentacoes
               movimentacoes={movimentacoes}
-              onNovaMovimentacao={() => setShowMovimentacao(true)}
+              onNovaMovimentacao={() =>
+                canEditEPIs && setShowMovimentacao(true)
+              }
+              canCreate={canEditEPIs}
             />
           )}
 
-          {currentView === "relatorios" && (
+          {currentView === "relatorios" && canViewReports && (
             <Relatorios epis={epis} movimentacoes={movimentacoes} />
           )}
 
-          {currentView === "usuarios" && <Usuarios />}
+          {currentView === "usuarios" && canAccessUsuarios && <Usuarios />}
+
+          {/* Mensagem de acesso negado */}
+          {currentView === "usuarios" && !canAccessUsuarios && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <p className="text-gray-600">
+                Você não tem permissão para acessar esta página.
+              </p>
+            </div>
+          )}
         </main>
       </div>
 
       {/* Modais */}
-      <EPIModal
-        isOpen={showAddEPI}
-        onClose={() => setShowAddEPI(false)}
-        onSave={handleSaveEPI}
-      />
-      <EPIModal
-        isOpen={!!editingEPI}
-        onClose={() => setEditingEPI(null)}
-        epi={editingEPI}
-        onSave={handleSaveEPI}
-      />
-      <MovimentacaoModal
-        isOpen={showMovimentacao}
-        onClose={() => setShowMovimentacao(false)}
-        epis={epis}
-        currentUser={currentUser}
-        onSave={handleSaveMovimentacao}
-      />
+      {canEditEPIs && (
+        <>
+          <EPIModal
+            isOpen={showAddEPI}
+            onClose={() => setShowAddEPI(false)}
+            onSave={handleSaveEPI}
+          />
+          <EPIModal
+            isOpen={!!editingEPI}
+            onClose={() => setEditingEPI(null)}
+            epi={editingEPI}
+            onSave={handleSaveEPI}
+          />
+          <MovimentacaoModal
+            isOpen={showMovimentacao}
+            onClose={() => setShowMovimentacao(false)}
+            epis={epis}
+            currentUser={currentUser}
+            onSave={handleSaveMovimentacao}
+          />
+        </>
+      )}
+
       <EPIDetalhesModal
         isOpen={!!viewingEPI}
         onClose={() => setViewingEPI(null)}

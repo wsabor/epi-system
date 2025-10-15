@@ -443,8 +443,8 @@ const Usuarios = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {usuariosFiltrados.map((usuario) => {
-                const roleConfig = roles[usuario.role];
-                const RoleIcon = roleConfig.icon;
+                const roleConfig = roles[usuario.role] || roles.visualizador;
+                const RoleIcon = roleConfig?.icon || Eye;
 
                 return (
                   <tr key={usuario.id} className="hover:bg-gray-50">

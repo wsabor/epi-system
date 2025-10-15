@@ -1,15 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
-  signInWithPopup,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, googleProvider, db } from "../services/firebase";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../services/firebase";
 
 const AuthContext = createContext();
 
@@ -23,84 +22,101 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Login com Google
-  const loginWithGoogle = async () => {
+  // Registrar novo usuário
+  const register = async ({
+    nome,
+    email,
+    password,
+    departamento,
+    telefone,
+  }) => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // Verificar/criar usuário no Firestore
-      const userRef = doc(db, "usuarios", user.uid);
-      const userDoc = await getDoc(userRef);
-
-      if (!userDoc.exists()) {
-        // Criar novo usuário
-        await setDoc(userRef, {
-          nome: user.displayName,
-          email: user.email,
-          permissao: "operador", // Padrão para novos usuários
-          ativo: true,
-          createdAt: serverTimestamp(),
-        });
-      }
-
-      return user;
-    } catch (error) {
-      console.error("Erro no login com Google:", error);
-      throw error;
-    }
-  };
-
-  // Login com Email/Senha
-  const loginWithEmail = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result.user;
-    } catch (error) {
-      console.error("Erro no login com email:", error);
-      throw error;
-    }
-  };
-
-  // Cadastrar novo usuário com Email/Senha
-  const registerWithEmail = async (email, password, nome) => {
-    try {
-      const result = await createUserWithEmailAndPassword(
+      console.log("🚀 Iniciando registro...");
+      console.log("📧 Email:", email);
+      console.log("👤 Nome:", nome);
+      
+      // 1. Criar usuário no Firebase Authentication
+      console.log("⏳ Criando usuário no Authentication...");
+      const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      const user = result.user;
+      const user = userCredential.user;
+      console.log("✅ Usuário criado no Authentication:", user.uid);
 
-      // Atualizar perfil com nome
+      // 2. Atualizar perfil com o nome
+      console.log("⏳ Atualizando perfil...");
       await updateProfile(user, {
         displayName: nome,
       });
+      console.log("✅ Perfil atualizado");
 
-      // Criar documento no Firestore
+      // 3. Criar documento do usuário no Firestore
+      console.log("⏳ Criando documento no Firestore...");
       await setDoc(doc(db, "usuarios", user.uid), {
-        nome: nome,
-        email: email,
-        permissao: "operador", // Padrão para novos usuários
+        nome,
+        email,
+        departamento,
+        telefone: telefone || "",
+        role: "visualizador", // Novo usuário sempre começa como visualizador
         ativo: true,
-        createdAt: serverTimestamp(),
+        dataCriacao: serverTimestamp(),
+        ultimoAcesso: serverTimestamp(),
       });
+      console.log("✅ Documento criado no Firestore");
 
+      console.log("✅ Usuário registrado com sucesso!");
       return user;
     } catch (error) {
-      console.error("Erro no cadastro:", error);
+      console.error("❌ ERRO COMPLETO:", error);
+      console.error("❌ Código do erro:", error.code);
+      console.error("❌ Mensagem:", error.message);
       throw error;
     }
   };
 
-  // Resetar senha
-  const resetPassword = async (email) => {
+  // Login
+  const login = async (email, password) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      console.log("🚀 Tentando fazer login...");
+      console.log("📧 Email:", email);
+      
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      console.log("✅ Login no Authentication OK");
+
+      // Atualizar último acesso
+      const userRef = doc(db, "usuarios", userCredential.user.uid);
+      
+      // Verificar se o documento existe
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        console.error("❌ Usuário não encontrado no Firestore!");
+        throw new Error("Usuário não tem perfil no sistema. Entre em contato com o administrador.");
+      }
+      
+      await setDoc(
+        userRef,
+        {
+          ultimoAcesso: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      console.log("✅ Login realizado com sucesso!");
+      return userCredential.user;
     } catch (error) {
-      console.error("Erro ao resetar senha:", error);
+      console.error("❌ ERRO NO LOGIN:", error);
+      console.error("❌ Código do erro:", error.code);
+      console.error("❌ Mensagem:", error.message);
       throw error;
     }
   };
@@ -109,58 +125,82 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await signOut(auth);
+      console.log("✅ Logout realizado com sucesso!");
     } catch (error) {
-      console.error("Erro no logout:", error);
+      console.error("❌ Erro ao fazer logout:", error);
       throw error;
     }
   };
 
-  // Monitorar estado de autenticação
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Buscar dados do usuário no Firestore
-        const userRef = doc(db, "usuarios", user.uid);
-        const userDoc = await getDoc(userRef);
+  // Recuperar senha
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      console.log("✅ Email de recuperação enviado!");
+    } catch (error) {
+      console.error("❌ Erro ao enviar email de recuperação:", error);
+      throw error;
+    }
+  };
 
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-
-          // Verificar se usuário está ativo
-          if (!userData.ativo) {
-            await signOut(auth);
-            setCurrentUser(null);
-            setLoading(false);
-            return;
-          }
-
-          setCurrentUser({
-            uid: user.uid,
-            email: user.email,
-            nome: user.displayName || userData.nome,
-            permissao: userData.permissao || "operador",
-            ativo: userData.ativo,
-          });
-        } else {
-          // Usuário existe no Auth mas não no Firestore - criar documento
-          await setDoc(userRef, {
-            nome: user.displayName || "Usuário",
-            email: user.email,
-            permissao: "operador",
-            ativo: true,
-            createdAt: serverTimestamp(),
-          });
-
-          setCurrentUser({
-            uid: user.uid,
-            email: user.email,
-            nome: user.displayName || "Usuário",
-            permissao: "operador",
-            ativo: true,
-          });
-        }
+  // Carregar perfil do usuário do Firestore
+  const loadUserProfile = async (uid) => {
+    try {
+      console.log("⏳ Carregando perfil do usuário:", uid);
+      const userDoc = await getDoc(doc(db, "usuarios", uid));
+      if (userDoc.exists()) {
+        console.log("✅ Perfil carregado:", userDoc.data());
+        setUserProfile(userDoc.data());
+        return userDoc.data();
       } else {
+        console.warn("⚠️ Perfil de usuário não encontrado no Firestore");
+        // Criar perfil básico se não existir
+        const basicProfile = {
+          nome: "Usuário",
+          email: "",
+          role: "visualizador",
+          ativo: true,
+          dataCriacao: serverTimestamp(),
+        };
+        await setDoc(doc(db, "usuarios", uid), basicProfile);
+        setUserProfile(basicProfile);
+        return basicProfile;
+      }
+    } catch (error) {
+      console.error("❌ Erro ao carregar perfil do usuário:", error);
+      return null;
+    }
+  };
+
+  // Verificar permissões
+  const hasPermission = (requiredRole) => {
+    if (!userProfile) return false;
+
+    const roleHierarchy = {
+      admin: 3,
+      operador: 2,
+      visualizador: 1,
+    };
+
+    const userRoleLevel = roleHierarchy[userProfile.role] || 0;
+    const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
+
+    return userRoleLevel >= requiredRoleLevel;
+  };
+
+  // Observar mudanças no estado de autenticação
+  useEffect(() => {
+    console.log("🔄 Iniciando observação de autenticação...");
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("🔄 Estado de autenticação mudou:", user ? "LOGADO" : "DESLOGADO");
+      if (user) {
+        console.log("👤 Usuário logado:", user.email);
+        setCurrentUser(user);
+        await loadUserProfile(user.uid);
+      } else {
+        console.log("👋 Nenhum usuário logado");
         setCurrentUser(null);
+        setUserProfile(null);
       }
       setLoading(false);
     });
@@ -170,17 +210,15 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
-    loginWithGoogle,
-    loginWithEmail,
-    registerWithEmail,
-    resetPassword,
-    logout,
+    userProfile,
     loading,
+    register,
+    login,
+    logout,
+    resetPassword,
+    hasPermission,
+    loadUserProfile,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

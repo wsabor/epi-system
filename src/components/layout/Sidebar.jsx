@@ -1,6 +1,5 @@
 import React from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import {
   Home,
   Package,
@@ -16,24 +15,17 @@ const Sidebar = ({
   setSidebarOpen,
   currentView,
   setCurrentView,
+  userRole, // ← CORRIGIDO (estava "useRole")
 }) => {
-  const menuItems = [
-    { id: "dashboard", icon: Home, label: "Dashboard" },
-    { id: "estoque", icon: Package, label: "Controle de Estoque" },
-    { id: "movimentacoes", icon: TrendingUp, label: "Movimentações" },
-    { id: "relatorios", icon: FileText, label: "Relatórios" },
-    { id: "usuarios", icon: Users, label: "Usuários" },
-  ];
-
   const { logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Erro ao sair:", error);
+    if (window.confirm("Tem certeza que deseja sair?")) {
+      try {
+        await logout();
+      } catch (error) {
+        console.error("Erro ao sair:", error);
+      }
     }
   };
 
@@ -41,6 +33,14 @@ const Sidebar = ({
     setCurrentView(itemId);
     setSidebarOpen(false);
   };
+
+  // Itens do menu (sem Usuários, vamos adicionar depois com validação)
+  const menuItems = [
+    { id: "dashboard", icon: Home, label: "Dashboard" },
+    { id: "estoque", icon: Package, label: "Controle de Estoque" },
+    { id: "movimentacoes", icon: TrendingUp, label: "Movimentações" },
+    { id: "relatorios", icon: FileText, label: "Relatórios" },
+  ];
 
   return (
     <div
@@ -51,9 +51,9 @@ const Sidebar = ({
       {/* Header do Sidebar */}
       <div className="flex items-center justify-between p-4 border-b border-red-500">
         <div className="flex items-center space-x-3">
-          <div className="w-16 h-10 bg-white rounded flex items-center justify-center">
+          {/* <div className="w-16 h-10 bg-white rounded flex items-center justify-center">
             <span className="text-red-600 font-bold text-xs">SENAI</span>
-          </div>
+          </div> */}
           <div className="text-white">
             <h2 className="font-bold">EPIs</h2>
             <p className="text-xs text-red-100">Controle</p>
@@ -75,6 +75,7 @@ const Sidebar = ({
           </h3>
         </div>
 
+        {/* Itens do menu principais */}
         {menuItems.map((item) => (
           <button
             key={item.id}
@@ -89,6 +90,21 @@ const Sidebar = ({
             <span className="text-white font-medium">{item.label}</span>
           </button>
         ))}
+
+        {/* Item Usuários - SÓ APARECE SE FOR ADMIN */}
+        {userRole === "admin" && (
+          <button
+            onClick={() => handleMenuClick("usuarios")}
+            className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-500 transition-colors ${
+              currentView === "usuarios"
+                ? "bg-red-500 border-r-4 border-white"
+                : ""
+            }`}
+          >
+            <Users size={20} className="text-white" />
+            <span className="text-white font-medium">Usuários</span>
+          </button>
+        )}
       </nav>
 
       {/* Botão de Sair */}
