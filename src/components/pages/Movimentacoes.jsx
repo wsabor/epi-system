@@ -8,12 +8,14 @@ import {
   AlertTriangle,
   ArrowUpDown,
 } from "lucide-react";
+import MovimentacaoDetalhesModal from "../modals/MovimentacaoDetalhesModal";
 
-const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao }) => {
+const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao, canCreate = true }) => {
   const [searchMovTerm, setSearchMovTerm] = useState("");
   const [filterMovTipo, setFilterMovTipo] = useState("");
   const [filterDataInicio, setFilterDataInicio] = useState("");
   const [filterDataFim, setFilterDataFim] = useState("");
+  const [movimentacaoDetalhes, setMovimentacaoDetalhes] = useState(null);
 
   // Filtrar movimentações (com proteção contra undefined)
   const filteredMovimentacoes = useMemo(() => {
@@ -114,6 +116,13 @@ const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao }) => {
 
   return (
     <div className="space-y-6">
+      {/* Modal de Detalhes */}
+      <MovimentacaoDetalhesModal
+        isOpen={!!movimentacaoDetalhes}
+        onClose={() => setMovimentacaoDetalhes(null)}
+        movimentacao={movimentacaoDetalhes}
+      />
+
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -122,13 +131,15 @@ const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao }) => {
             Histórico de entradas e saídas de EPIs
           </p>
         </div>
-        <button
-          onClick={onNovaMovimentacao}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Nova Movimentação</span>
-        </button>
+        {canCreate && (
+          <button
+            onClick={onNovaMovimentacao}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2 transition-colors"
+          >
+            <Plus size={20} />
+            <span>Nova Movimentação</span>
+          </button>
+        )}
       </div>
 
       {/* Filtros de Movimentação */}
@@ -286,7 +297,8 @@ const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
-                        className="text-blue-600 hover:text-blue-900 p-1"
+                        onClick={() => setMovimentacaoDetalhes(mov)}
+                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-colors"
                         title="Ver detalhes"
                       >
                         <Eye size={16} />

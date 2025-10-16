@@ -6,6 +6,7 @@ import {
   TrendingUp,
   FileText,
   Users,
+  Info,
   LogOut,
   X,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const Sidebar = ({
     { id: "estoque", icon: Package, label: "Controle de Estoque" },
     { id: "movimentacoes", icon: TrendingUp, label: "Movimentações" },
     { id: "relatorios", icon: FileText, label: "Relatórios" },
+    { id: "sobre", icon: Info, label: "Sobre" },
   ];
 
   return (
