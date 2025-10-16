@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import {
   subscribeToEPIs,
   createEPI as createEPIService,
@@ -7,22 +8,35 @@ import {
 } from "../services/epiServices";
 
 export const useEPIs = () => {
+  const { currentUser } = useAuth();
   const [epis, setEpis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Só iniciar subscription se o usuário estiver autenticado
+    if (!currentUser) {
+      setEpis([]);
+      setLoading(false);
+      return;
+    }
+
+    console.log("🔄 Iniciando subscription de EPIs...");
     setLoading(true);
 
     // Subscrever para atualizações em tempo real
     const unsubscribe = subscribeToEPIs((episData) => {
+      console.log("✅ EPIs carregados:", episData.length);
       setEpis(episData);
       setLoading(false);
     });
 
     // Cleanup: cancelar subscription quando componente desmontar
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      console.log("🛑 Cancelando subscription de EPIs");
+      unsubscribe();
+    };
+  }, [currentUser]); // ← ADICIONADA DEPENDÊNCIA
 
   const addEPI = async (epiData) => {
     try {

@@ -15,34 +15,41 @@ const movimentacoesCollection = collection(db, "movimentacoes");
 
 // Buscar todas as movimentações (com listener em tempo real)
 export const subscribeToMovimentacoes = (callback) => {
-  const q = query(
-    movimentacoesCollection,
-    orderBy("createdAt", "desc"),
-    limit(100)
-  );
+  try {
+    const q = query(
+      movimentacoesCollection,
+      orderBy("createdAt", "desc"),
+      limit(100)
+    );
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const movimentacoes = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        movimentacoes.push({
-          id: doc.id,
-          ...data,
-          data:
-            data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const movimentacoes = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          movimentacoes.push({
+            id: doc.id,
+            ...data,
+            data:
+              data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+          });
         });
-      });
-      callback(movimentacoes);
-    },
-    (error) => {
-      console.error("Erro ao buscar movimentações:", error);
-      callback([]);
-    }
-  );
+        console.log("📦 Movimentações encontradas no Firebase:", movimentacoes.length);
+        callback(movimentacoes);
+      },
+      (error) => {
+        console.error("❌ Erro ao buscar movimentações:", error);
+        callback([]);
+      }
+    );
 
-  return unsubscribe;
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Erro ao criar subscription de Movimentações:", error);
+    callback([]);
+    return () => {}; // Retorna função vazia para evitar erros
+  }
 };
 
 // Buscar todas as movimentações (uma vez)
