@@ -9,6 +9,7 @@ import ControleEstoque from "./components/pages/ControleEstoque";
 import Movimentacoes from "./components/pages/Movimentacoes";
 import Relatorios from "./components/pages/Relatorios";
 import Usuarios from "./components/pages/Usuarios/Usuarios";
+import Sobre from "./components/pages/Sobre";
 import AuthWrapper from "./components/auth/AuthWrapper";
 
 //Modais
@@ -235,6 +236,8 @@ const App = () => {
           )}
 
           {currentView === "usuarios" && canAccessUsuarios && <Usuarios />}
+
+          {currentView === "sobre" && <Sobre />}
 
           {/* Mensagem de acesso negado */}
           {currentView === "usuarios" && !canAccessUsuarios && (

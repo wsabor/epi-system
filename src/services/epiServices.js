@@ -16,27 +16,34 @@ const episCollection = collection(db, "epis");
 
 // Buscar todos os EPIs (com listener em tempo real)
 export const subscribeToEPIs = (callback) => {
-  const q = query(episCollection, orderBy("descricao"));
+  try {
+    const q = query(episCollection, orderBy("descricao"));
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const epis = [];
-      snapshot.forEach((doc) => {
-        epis.push({
-          id: doc.id,
-          ...doc.data(),
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const epis = [];
+        snapshot.forEach((doc) => {
+          epis.push({
+            id: doc.id,
+            ...doc.data(),
+          });
         });
-      });
-      callback(epis);
-    },
-    (error) => {
-      console.error("Erro ao buscar EPIs:", error);
-      callback([]);
-    }
-  );
+        console.log("📦 EPIs encontrados no Firebase:", epis.length);
+        callback(epis);
+      },
+      (error) => {
+        console.error("❌ Erro ao buscar EPIs:", error);
+        callback([]);
+      }
+    );
 
-  return unsubscribe;
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Erro ao criar subscription de EPIs:", error);
+    callback([]);
+    return () => {}; // Retorna função vazia para evitar erros
+  }
 };
 
 // Buscar todos os EPIs (uma vez)
