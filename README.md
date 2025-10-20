@@ -1,5 +1,7 @@
 # 🛡️ EPI System - Sistema de Gestão de EPIs
 
+[![GitHub release](https://img.shields.io/github/v/release/wsabor/epi-system?style=for-the-badge)](https://github.com/wsabor/epi-system/releases)
+
 <div align="center">
   <img src="https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/React-19.1.1-blue?style=for-the-badge&logo=react" alt="React">
