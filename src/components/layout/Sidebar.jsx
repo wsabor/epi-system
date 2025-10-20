@@ -57,8 +57,8 @@ const Sidebar = ({
             <span className="text-red-600 font-bold text-xs">SENAI</span>
           </div> */}
           <div className="text-white">
-            <h2 className="font-bold">EPIs</h2>
-            <p className="text-xs text-red-100">Controle</p>
+            <h2 className="font-bold">EPI System</h2>
+            <p className="text-xs text-red-100">Controle de EPIs</p>
           </div>
         </div>
         <button

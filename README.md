@@ -1,9 +1,9 @@
-# 🛡️ Sistema de Controle de EPIs - SENAI São Paulo
+# 🛡️ EPI System - Sistema de Gestão de EPIs
 
 <div align="center">
   <img src="https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/React-18.3.1-blue?style=for-the-badge&logo=react" alt="React">
-  <img src="https://img.shields.io/badge/Firebase-11.1.0-orange?style=for-the-badge&logo=firebase" alt="Firebase">
+  <img src="https://img.shields.io/badge/React-19.1.1-blue?style=for-the-badge&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Firebase-12.2.1-orange?style=for-the-badge&logo=firebase" alt="Firebase">
   <img src="https://img.shields.io/badge/Tailwind-3.4.17-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </div>
@@ -11,8 +11,14 @@
 <br>
 
 <div align="center">
-  <p><strong>Sistema completo para gerenciamento de Equipamentos de Proteção Individual (EPIs)</strong></p>
-  <p>Desenvolvido para otimizar o controle de estoque, movimentações e relatórios de EPIs no ambiente industrial</p>
+  <p><strong>Sistema completo para gerenciamento de Equipamentos de Proteção Individual</strong></p>
+  <p>Solução moderna e intuitiva para controle de estoque, movimentações e relatórios de EPIs</p>
+  <p>
+    <a href="https://epi-system.wsabor.dev" target="_blank">🌐 Ver Demo</a> •
+    <a href="#-instalação">📦 Instalação</a> •
+    <a href="#-funcionalidades">⚡ Funcionalidades</a> •
+    <a href="#-tecnologias-utilizadas">🛠️ Tecnologias</a>
+  </p>
 </div>
 
 ---
@@ -20,6 +26,7 @@
 ## 📋 Índice
 
 - [Sobre o Projeto](#-sobre-o-projeto)
+- [Demo Online](#-demo-online)
 - [Funcionalidades](#-funcionalidades)
 - [Tecnologias Utilizadas](#-tecnologias-utilizadas)
 - [Pré-requisitos](#-pré-requisitos)
@@ -28,9 +35,9 @@
 - [Como Usar](#-como-usar)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
 - [Sistema de Permissões](#-sistema-de-permissões)
-- [Capturas de Tela](#-capturas-de-tela)
+- [Screenshots](#-screenshots)
 - [Roadmap](#-roadmap)
-- [Contribuindo](#-contribuindo)
+- [Deploy](#-deploy)
 - [Licença](#-licença)
 - [Contato](#-contato)
 
@@ -38,104 +45,157 @@
 
 ## 🎯 Sobre o Projeto
 
-O **Sistema de Controle de EPIs** é uma aplicação web moderna desenvolvida para o SENAI São Paulo, que permite o gerenciamento completo do ciclo de vida dos Equipamentos de Proteção Individual, desde a entrada no estoque até a distribuição aos funcionários.
+O **EPI System** é uma aplicação web moderna e responsiva desenvolvida para otimizar o gerenciamento completo do ciclo de vida dos Equipamentos de Proteção Individual, desde a entrada no estoque até a distribuição aos funcionários.
 
-### Problema que resolve:
-- Controle manual de EPIs propenso a erros
-- Falta de rastreabilidade de movimentações
-- Dificuldade em gerar relatórios
-- Perda de EPIs por vencimento
-- Gestão ineficiente de estoque
+### 💡 Problema que resolve:
 
-### Solução oferecida:
-✅ Controle digitalizado e em tempo real  
-✅ Rastreamento completo de movimentações  
-✅ Alertas automáticos de vencimento e estoque baixo  
-✅ Relatórios PDF/Excel instantâneos  
-✅ Sistema de permissões por função  
-✅ Auditoria completa de ações  
+- ❌ Controle manual de EPIs propenso a erros
+- ❌ Falta de rastreabilidade de movimentações
+- ❌ Dificuldade em gerar relatórios
+- ❌ Perda de EPIs por vencimento
+- ❌ Gestão ineficiente de estoque
+
+### ✅ Solução oferecida:
+
+- ✅ **Controle digitalizado** em tempo real
+- ✅ **Rastreamento completo** de movimentações
+- ✅ **Alertas automáticos** de vencimento e estoque baixo
+- ✅ **Relatórios PDF/Excel** instantâneos
+- ✅ **Sistema de permissões** por função
+- ✅ **Auditoria completa** de ações
+- ✅ **Interface moderna** e intuitiva
+- ✅ **Sistema de convites** com QR Code e email
+
+---
+
+## 🌐 Demo Online
+
+🚀 **Acesse a aplicação**: [https://epi-system.wsabor.dev](https://epi-system.wsabor.dev)
+
+### Credenciais de Teste:
+
+**Administrador:**
+
+- Email: `admin@demo.com`
+- Senha: `demo123`
+
+**Operador:**
+
+- Email: `operador@demo.com`
+- Senha: `demo123`
+
+**Visualizador:**
+
+- Email: `viewer@demo.com`
+- Senha: `demo123`
+
+> ⚠️ **Nota**: Esta é uma versão de demonstração. Os dados podem ser resetados periodicamente.
 
 ---
 
 ## ⚡ Funcionalidades
 
-### 🏠 Dashboard
-- Visão geral do estoque em tempo real
-- Indicadores visuais (EPIs ativos, vencidos, estoque baixo)
-- Gráficos interativos de distribuição por categoria
-- Timeline de movimentações recentes
+### 🏠 Dashboard Inteligente
+
+- 📊 Visão geral do estoque em tempo real
+- 📈 Indicadores visuais (EPIs ativos, vencidos, estoque baixo)
+- 📉 Gráficos interativos de distribuição por categoria
+- ⏰ Timeline de movimentações recentes
+- 🔔 Alertas automáticos de estoque crítico
 
 ### 📦 Controle de Estoque
-- CRUD completo de EPIs
-- Cadastro com:
+
+- ➕ **CRUD completo** de EPIs
+- 📝 **Cadastro detalhado** com:
   - Informações básicas (descrição, marca, tamanho, CA)
   - Controle de quantidade e estoque mínimo
-  - Datas de validade com alertas automáticos
-  - Valores e custos
-  - Fornecedores
-- Busca e filtros avançados
-- Modal de detalhes com histórico completo
+  - Datas de validade com alertas inteligentes
+  - Valores, custos e fornecedores
+- 🔍 **Busca e filtros avançados**
+- 👁️ **Modal de detalhes** com histórico completo
+- ⚡ **Validações em tempo real**
 
 ### 🔄 Movimentações
-- Registro de 4 tipos de movimentação:
-  - **Entrada**: Compras e recebimentos
-  - **Saída**: Distribuição aos funcionários
-  - **Ajuste**: Correções de inventário
-  - **Perda**: Registro de danos/extravios
-- Histórico completo com timestamps
-- Rastreamento de responsáveis
-- Integração automática com estoque
 
-### 📊 Relatórios
-- **Relatório de Estoque**: Visão completa com valores
-- **Relatório de Movimentações**: Histórico detalhado com filtros por período
-- **Relatório de Vencimentos**: EPIs vencidos e próximos ao vencimento
-- **Dashboard Avançado**: Análises estatísticas e gráficos
-- Exportação em **PDF** e **Excel**
+- 📥 **Entrada**: Compras e recebimentos
+- 📤 **Saída**: Distribuição aos funcionários
+- ⚙️ **Ajuste**: Correções de inventário
+- ⚠️ **Perda**: Registro de danos/extravios
+- 📝 **Histórico completo** com timestamps
+- 👤 **Rastreamento de responsáveis**
+- 🔗 **Integração automática** com estoque
+
+### 📊 Relatórios Profissionais
+
+- 📄 **Relatório de Estoque**: Visão completa com valores
+- 📋 **Relatório de Movimentações**: Histórico detalhado
+- ⏰ **Relatório de Vencimentos**: EPIs vencidos e próximos
+- 📈 **Dashboard Avançado**: Análises estatísticas
+- 💾 **Exportação**: PDF e Excel
+- 🎨 **Design profissional** com tabelas formatadas
 
 ### 👥 Gerenciamento de Usuários
-- Sistema de 3 níveis de permissão:
+
+- 🔐 **3 níveis de permissão**:
   - **Administrador**: Acesso total
   - **Operador**: Gerencia EPIs e movimentações
   - **Visualizador**: Apenas consulta
-- CRUD de usuários
-- Ativação/desativação de contas
-- Log de auditoria por usuário
+- 📧 **Sistema de convites** por email
+- 📱 **QR Code** para acesso rápido
+- ✅ **Ativação/desativação** de contas
+- 📜 **Log de auditoria** completo
 
 ### 🔐 Autenticação e Segurança
-- Login com email/senha via Firebase Authentication
-- Registro de novos usuários
-- Recuperação de senha
-- Proteção de rotas
-- Sessão persistente
-- Logout seguro
+
+- 🔑 Firebase Authentication
+- 📧 Login com email/senha
+- 🔄 Registro de novos usuários
+- 🔓 Recuperação de senha
+- 🛡️ Proteção de rotas
+- 💾 Sessão persistente
+- 🚪 Logout seguro
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
 ### Frontend
-- **React 18.3.1** - Biblioteca JavaScript para interfaces
-- **Vite 6.0.3** - Build tool e dev server
-- **Tailwind CSS 3.4.17** - Framework CSS utility-first
-- **Lucide React 0.469.0** - Ícones modernos
-- **Recharts 2.15.0** - Biblioteca de gráficos
+
+```
+React 19.1.1          - Biblioteca JavaScript para interfaces
+Vite 7.1.2            - Build tool e dev server ultrarrápido
+Tailwind CSS 3.4.17   - Framework CSS utility-first
+React Router 7.9.4    - Roteamento de páginas
+Lucide React 0.544.0  - Ícones modernos e elegantes
+Recharts 3.2.1        - Biblioteca de gráficos interativos
+```
 
 ### Backend/Database
-- **Firebase 11.1.0**
-  - Authentication - Autenticação de usuários
-  - Firestore - Banco de dados NoSQL em tempo real
-  - Hosting - Hospedagem (opcional)
+
+```
+Firebase 12.2.1
+├── Authentication    - Autenticação de usuários
+├── Firestore        - Banco NoSQL em tempo real
+└── Hosting          - Deploy e hospedagem
+```
 
 ### Bibliotecas Auxiliares
-- **jsPDF 2.5.2** - Geração de PDFs
-- **jsPDF-AutoTable 3.8.4** - Tabelas em PDFs
-- **SheetJS (xlsx) 0.18.5** - Geração de Excel
-- **Date-fns** - Manipulação de datas
+
+```
+jsPDF 3.0.3              - Geração de PDFs
+jsPDF-AutoTable 5.0.2    - Tabelas em PDFs
+SheetJS (xlsx) 0.18.5    - Geração de Excel
+EmailJS 4.4.1            - Envio de emails
+QRCode.React 4.2.0       - Geração de QR Codes
+```
 
 ### Dev Tools
-- **ESLint** - Linting de código
-- **PostCSS** - Processamento CSS
+
+```
+ESLint 9.33.0        - Linting de código
+PostCSS 8.5.6        - Processamento CSS
+Autoprefixer 10.4.21 - Prefixos CSS automáticos
+```
 
 ---
 
@@ -143,34 +203,64 @@ O **Sistema de Controle de EPIs** é uma aplicação web moderna desenvolvida pa
 
 Antes de começar, certifique-se de ter instalado:
 
-- **Node.js** (versão 16 ou superior)
-- **npm** ou **yarn**
-- Conta no **Firebase** (gratuita)
-- Editor de código (recomendado: **VS Code**)
+- ✅ **Node.js** 18+ ([Download](https://nodejs.org/))
+- ✅ **npm** ou **yarn**
+- ✅ Conta no **Firebase** ([Criar conta gratuita](https://firebase.google.com/))
+- ✅ Conta no **EmailJS** ([Criar conta](https://www.emailjs.com/)) - Opcional
+- ✅ Editor de código (recomendado: [VS Code](https://code.visualstudio.com/))
 
 ---
 
 ## 🚀 Instalação
 
-### 1. Clone o repositório
+### 1️⃣ Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/senai-epi-system.git
-cd senai-epi-system
+git clone https://github.com/wsabor/epi-system.git
+cd epi-system
 ```
 
-### 2. Instale as dependências
+### 2️⃣ Instale as dependências
 
 ```bash
 npm install
 ```
 
-### 3. Configure o Firebase
+### 3️⃣ Configure o Firebase
+
+#### a) Crie um projeto no Firebase:
+
+1. Acesse [Firebase Console](https://console.firebase.google.com/)
+2. Clique em "Adicionar projeto"
+3. Siga os passos de configuração
+
+#### b) Configure Authentication:
+
+1. No Firebase Console, vá em **Authentication**
+2. Clique em **"Get Started"**
+3. Ative **Email/Password** como provedor
+
+#### c) Configure Firestore:
+
+1. Vá em **Firestore Database**
+2. Clique em **"Criar banco de dados"**
+3. Escolha **"Iniciar no modo de produção"**
+4. Selecione a localização (southamerica-east1)
+
+#### d) Obtenha as credenciais:
+
+1. Vá em **Configurações do projeto** (ícone de engrenagem)
+2. Role até **"Seus aplicativos"**
+3. Clique no ícone **</>** (Web)
+4. Registre o app
+5. Copie as credenciais do Firebase
+
+### 4️⃣ Configure as variáveis de ambiente
 
 Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
-VITE_FIREBASE_API_KEY=sua_api_key
+VITE_FIREBASE_API_KEY=sua_api_key_aqui
 VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=seu_projeto_id
 VITE_FIREBASE_STORAGE_BUCKET=seu_projeto.appspot.com
@@ -178,155 +268,232 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=seu_sender_id
 VITE_FIREBASE_APP_ID=seu_app_id
 ```
 
-> ⚠️ **Importante**: Nunca commite o arquivo `.env.local` no Git!
+> ⚠️ **IMPORTANTE**:
+>
+> - Nunca commite o arquivo `.env.local` no Git!
+> - O arquivo `.gitignore` já está configurado para ignorá-lo
 
-### 4. Configure as regras do Firestore
+### 5️⃣ Configure as regras do Firestore
 
-No Firebase Console, vá em **Firestore Database → Regras** e adicione:
+No Firebase Console → **Firestore Database** → **Regras**, cole:
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+
     match /epis/{epiId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
-    match /movimentacoes/{movId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+
+    match /movimentacoes/{movimentacaoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
+
     match /usuarios/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow update, delete: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == userId;
     }
+
+    match /convites/{conviteId} {
+      allow create: if isAdmin();
+      allow list: if isAdmin();
+      allow get: if true;
+      allow update: if request.resource.data.usado == true &&
+                       resource.data.usado == false;
+    }
+
     match /logs/{logId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
     }
   }
 }
 ```
 
-### 5. Execute o projeto
+Clique em **"Publicar"**.
+
+### 6️⃣ Execute o projeto
 
 ```bash
 npm run dev
 ```
 
-Acesse: `http://localhost:5173`
+🎉 Acesse: **http://localhost:5173**
 
 ---
 
 ## ⚙️ Configuração
 
-### Criando o Primeiro Usuário Admin
+### 🔐 Criando o Primeiro Usuário Admin
 
-1. Acesse o Firebase Console → Authentication
-2. Clique em "Add user"
-3. Adicione:
-   - Email: `admin@senai.br`
-   - Senha: `sua_senha_segura`
-4. Copie o **UID** do usuário criado
-5. Vá em Firestore Database → Criar documento
-6. Collection: `usuarios`
-7. ID do documento: Cole o UID copiado
-8. Campos:
+#### Método 1: Via Firebase Console (Recomendado)
+
+1. **Firebase Console** → **Authentication** → **Add user**
+2. Adicione:
+   - Email: `admin@seudominio.com`
+   - Senha: `senha_segura_123`
+3. Copie o **UID** do usuário
+4. Vá em **Firestore Database** → **Adicionar documento**
+5. Collection: `usuarios`, Document ID: **Cole o UID**
+6. Campos:
    ```
    nome: "Admin Sistema"
-   email: "admin@senai.br"
+   email: "admin@seudominio.com"
    role: "admin"
    departamento: "TI"
    telefone: "(11) 98765-4321"
    ativo: true
    dataCriacao: [timestamp atual]
+   ultimoAcesso: null
    ```
+7. Salvar
 
-Pronto! Agora você pode fazer login com esse usuário.
+✅ Pronto! Faça login com esse usuário.
+
+#### Método 2: Via Registro na Aplicação
+
+1. Acesse a tela de registro
+2. Preencha os dados
+3. Após criar, vá no Firestore e **mude o role para "admin"**
+
+### 📧 Configurar EmailJS (Opcional - Sistema de Convites)
+
+1. Acesse [EmailJS](https://www.emailjs.com/) e crie uma conta
+2. Adicione um serviço de email (Gmail recomendado)
+3. Crie um template de email
+4. Copie: **Service ID**, **Template ID** e **Public Key**
+5. Edite `src/services/emailService.js`:
+   ```javascript
+   const EMAILJS_CONFIG = {
+     serviceId: "seu_service_id",
+     templateId: "seu_template_id",
+     publicKey: "sua_public_key",
+   };
+   ```
 
 ---
 
 ## 📖 Como Usar
 
-### Login no Sistema
+### 1️⃣ Login no Sistema
 
-1. Acesse a tela de login
+1. Acesse a aplicação
 2. Digite email e senha
 3. Clique em "Entrar"
 
-### Cadastrar um EPI
+### 2️⃣ Cadastrar um EPI
 
-1. Vá em "Controle de Estoque"
-2. Clique em "Novo EPI"
-3. Preencha os dados obrigatórios
-4. Clique em "Salvar"
+1. Menu lateral → **"Controle de Estoque"**
+2. Botão **"Novo EPI"**
+3. Preencha:
+   - Descrição, categoria, tamanho
+   - Quantidade atual e mínima
+   - Marca, nº CA, validade
+   - Valor unitário e fornecedor
+4. **"Salvar"**
 
-### Registrar Movimentação
+### 3️⃣ Registrar Movimentação
 
-1. Vá em "Movimentações"
-2. Clique em "Nova Movimentação"
-3. Selecione o EPI
-4. Escolha o tipo (Entrada/Saída/Ajuste/Perda)
-5. Preencha quantidade e responsável
-6. Salve
+1. **"Movimentações"** → **"Nova Movimentação"**
+2. Selecione o EPI
+3. Escolha o tipo:
+   - **Entrada**: Compra
+   - **Saída**: Entrega ao funcionário
+   - **Ajuste**: Correção
+   - **Perda**: Dano/Extravio
+4. Quantidade e responsável
+5. **"Salvar"**
 
-### Gerar Relatórios
+### 4️⃣ Gerar Relatórios
 
-1. Vá em "Relatórios"
-2. Escolha o tipo de relatório
-3. Aplique filtros (se necessário)
-4. Clique em "Exportar PDF" ou "Exportar Excel"
+1. **"Relatórios"**
+2. Escolha o tipo
+3. Aplique filtros
+4. **"Exportar PDF"** ou **"Exportar Excel"**
+
+### 5️⃣ Convidar Usuários
+
+1. **"Usuários"** → **"Novo Usuário"**
+2. Preencha dados e selecione função
+3. **"Enviar Convite"**
+4. Copie o link OU escaneie QR Code OU envie email
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-senai-epi-system/
+epi-system/
 ├── public/
 ├── src/
 │   ├── components/
-│   │   ├── auth/
+│   │   ├── auth/                 # Autenticação
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── ForgotPassword.jsx
+│   │   │   ├── AceitarConvite.jsx
 │   │   │   └── AuthWrapper.jsx
-│   │   ├── layout/
+│   │   ├── layout/               # Layout
 │   │   │   ├── Header.jsx
 │   │   │   └── Sidebar.jsx
-│   │   ├── modals/
+│   │   ├── modals/               # Modais
 │   │   │   ├── EPIModal.jsx
 │   │   │   ├── EPIDetalhesModal.jsx
-│   │   │   └── MovimentacaoModal.jsx
-│   │   └── pages/
-│   │       ├── Dashboard.jsx
-│   │       ├── ControleEstoque.jsx
-│   │       ├── Movimentacoes.jsx
-│   │       ├── Relatorios.jsx
-│   │       └── Usuarios/
-│   │           ├── Usuarios.jsx
-│   │           ├── FormularioUsuario.jsx
-│   │           ├── ModalConfirmacao.jsx
-│   │           └── LogAuditoria.jsx
-│   ├── contexts/
-│   │   └── AuthContext.jsx
-│   ├── hooks/
+│   │   │   ├── MovimentacaoModal.jsx
+│   │   │   ├── MovimentacaoDetalhesModal.jsx
+│   │   │   └── ConviteUsuarioModal.jsx
+│   │   ├── pages/                # Páginas
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── ControleEstoque.jsx
+│   │   │   ├── Movimentacoes.jsx
+│   │   │   ├── Relatorios.jsx
+│   │   │   ├── Sobre.jsx
+│   │   │   └── Usuarios/
+│   │   │       ├── Usuarios.jsx
+│   │   │       ├── FormularioUsuario.jsx
+│   │   │       ├── ModalConfirmacao.jsx
+│   │   │       └── LogAuditoria.jsx
+│   │   └── ui/                   # Componentes UI
+│   │       ├── StatsCard.jsx
+│   │       └── ProtectedAction.jsx
+│   ├── contexts/                 # Contextos React
+│   │   ├── AuthContext.jsx
+│   │   └── PermissionsContext.jsx
+│   ├── hooks/                    # Custom Hooks
 │   │   ├── useEPIs.js
 │   │   ├── useMovimentacoes.js
 │   │   ├── useUsuarios.js
 │   │   └── useLogs.js
-│   ├── services/
-│   │   └── firebase.js
+│   ├── services/                 # Serviços
+│   │   ├── firebase.js
+│   │   ├── epiServices.js
+│   │   ├── movimentacaoService.js
+│   │   └── emailService.js
+│   ├── utils/                    # Utilitários
+│   │   └── seedUsuarios.js
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css
-├── .env.local
+├── .env.local                    # Variáveis de ambiente
 ├── .gitignore
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
+├── vercel.json                   # Config deploy Vercel
 └── README.md
 ```
 
@@ -334,80 +501,103 @@ senai-epi-system/
 
 ## 🔐 Sistema de Permissões
 
-| Funcionalidade | Administrador | Operador | Visualizador |
-|---|:---:|:---:|:---:|
-| Ver Dashboard | ✅ | ✅ | ✅ |
-| Ver Estoque | ✅ | ✅ | ✅ |
-| Criar/Editar EPIs | ✅ | ✅ | ❌ |
-| Excluir EPIs | ✅ | ✅ | ❌ |
-| Registrar Movimentações | ✅ | ✅ | ❌ |
-| Gerar Relatórios | ✅ | ✅ | ✅ |
-| Gerenciar Usuários | ✅ | ❌ | ❌ |
-| Ver Logs de Auditoria | ✅ | ❌ | ❌ |
+| Funcionalidade          | 👑 Admin | 🔧 Operador | 👁️ Visualizador |
+| ----------------------- | :------: | :---------: | :-------------: |
+| Ver Dashboard           |    ✅    |     ✅      |       ✅        |
+| Ver Estoque             |    ✅    |     ✅      |       ✅        |
+| Criar/Editar EPIs       |    ✅    |     ✅      |       ❌        |
+| Excluir EPIs            |    ✅    |     ✅      |       ❌        |
+| Registrar Movimentações |    ✅    |     ✅      |       ❌        |
+| Gerar Relatórios        |    ✅    |     ✅      |       ✅        |
+| Gerenciar Usuários      |    ✅    |     ❌      |       ❌        |
+| Ver Logs de Auditoria   |    ✅    |     ❌      |       ❌        |
+| Convidar Usuários       |    ✅    |     ❌      |       ❌        |
 
 ---
 
-## 📸 Capturas de Tela
+## 📸 Screenshots
 
-### Tela de Login
-![Login](docs/screenshots/login.png)
+### 🏠 Dashboard
 
-### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
+<img src="docs/screenshots/dashboard.webp" alt="Dashboard" width="800">
 
-### Controle de Estoque
-![Estoque](docs/screenshots/estoque.png)
+### 📦 Controle de Estoque
 
-### Relatórios
-![Relatorios](docs/screenshots/relatorios.png)
+<img src="docs/screenshots/estoque.webp" alt="Estoque" width="800">
 
-> 📝 **Nota**: Adicione as capturas de tela na pasta `docs/screenshots/`
+### 🔄 Movimentações
+
+<img src="docs/screenshots/movimentacoes.webp" alt="Movimentações" width="800">
+
+### 📊 Relatórios
+
+<img src="docs/screenshots/relatorios.webp" alt="Relatórios" width="800">
+
+### 👥 Gerenciamento de Usuários
+
+<img src="docs/screenshots/usuarios.webp" alt="Usuários" width="800">
+
+### 📧 Sistema de Convites
+
+<img src="docs/screenshots/convites.webp" alt="Convites" width="800">
 
 ---
 
 ## 🗺️ Roadmap
 
-### Versão 1.0 ✅
+### ✅ Versão 1.0 (Atual)
+
 - [x] Sistema de autenticação
-- [x] CRUD de EPIs
+- [x] CRUD de EPIs completo
 - [x] Controle de movimentações
 - [x] Relatórios PDF/Excel
 - [x] Gerenciamento de usuários
 - [x] Sistema de permissões
+- [x] Sistema de convites com QR Code
+- [x] Modal de detalhes de EPIs
+- [x] Modal de detalhes de movimentações
+- [x] Página "Sobre"
 
-### Versão 2.0 🚧
-- [ ] Notificações push
-- [ ] Dashboard com mais métricas
-- [ ] Modo escuro
-- [ ] PWA (funciona offline)
-- [ ] Integração com código de barras
-- [ ] API REST
-- [ ] Aplicativo mobile
+### 🚧 Versão 2.0 (Em Planejamento)
 
-### Versão 3.0 💡
+- [ ] Notificações push em tempo real
+- [ ] Dashboard com IA e predições
+- [ ] Modo escuro (Dark Mode)
+- [ ] PWA - Funciona offline
+- [ ] Scanner de código de barras/QR Code
+- [ ] API REST pública
+- [ ] Aplicativo mobile (React Native)
+- [ ] Integração com WhatsApp
+
+### 💡 Versão 3.0 (Futuro)
+
 - [ ] IA para previsão de demanda
-- [ ] Integração com ERP
+- [ ] Integração com sistemas ERP
 - [ ] Relatórios avançados com BI
 - [ ] Multi-tenancy (várias empresas)
+- [ ] Módulo de treinamentos
+- [ ] Assinatura digital
 
 ---
 
 ## 🤝 Contribuindo
 
-Contribuições são sempre bem-vindas! Siga estes passos:
+Contribuições são **muito bem-vindas**!
 
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
+### Como contribuir:
+
+1. Fork o projeto
+2. Crie uma branch: `git checkout -b feature/MinhaFeature`
+3. Commit: `git commit -m 'feat: Adiciona MinhaFeature'`
+4. Push: `git push origin feature/MinhaFeature`
 5. Abra um Pull Request
 
-### Padrões de Código
+### Padrões:
 
-- Use ESLint para manter o código consistente
-- Escreva commits descritivos
-- Comente código complexo
-- Teste antes de fazer PR
+- ✅ Use ESLint
+- ✅ Commits semânticos (feat, fix, docs, etc)
+- ✅ Comente código complexo
+- ✅ Teste antes de fazer PR
 
 ---
 
@@ -415,32 +605,46 @@ Contribuições são sempre bem-vindas! Siga estes passos:
 
 Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
+Isso significa que você pode:
+
+- ✅ Usar comercialmente
+- ✅ Modificar
+- ✅ Distribuir
+- ✅ Uso privado
+
 ---
 
 ## 📧 Contato
 
-**SENAI São Paulo**
-- Website: [https://www.sp.senai.br](https://www.sp.senai.br)
-- Email: contato@sp.senai.br
+**Wagner Sabor** - Desenvolvedor Especialista em Next.js e React.js
 
-**Desenvolvedor**
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/seu-perfil)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/wsabor)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/wagner-sabor)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:wsabor.senai@gmail.com)
+[![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wsabor.dev)
+
+**Link do Projeto**: [https://github.com/wsabor/epi-system](https://github.com/wsabor/epi-system)
+
+**Demo Online**: [https://epi-system.wsabor.dev](https://epi-system.wsabor.dev)
 
 ---
 
 ## 🙏 Agradecimentos
 
-- [React](https://reactjs.org/)
-- [Firebase](https://firebase.google.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Lucide Icons](https://lucide.dev/)
-- [Recharts](https://recharts.org/)
-- Comunidade Open Source
+- [React](https://reactjs.org/) - Biblioteca incrível
+- [Firebase](https://firebase.google.com/) - Backend poderoso
+- [Tailwind CSS](https://tailwindcss.com/) - CSS moderno
+- [Lucide Icons](https://lucide.dev/) - Ícones lindos
+- [Recharts](https://recharts.org/) - Gráficos interativos
+- [Vite](https://vitejs.dev/) - Build ultrarrápido
+- [Vercel](https://vercel.com/) - Deploy simplificado
+- Comunidade Open Source ❤️
 
 ---
 
 <div align="center">
-  <p>Feito com ❤️ para o SENAI São Paulo</p>
-  <p>⭐ Se este projeto te ajudou, deixe uma estrela!</p>
+  <p><strong>Feito com ❤️ e ☕ por Wagner Sabor</strong></p>
+  <p>
+    <a href="https://github.com/wsabor/epi-system">⭐ Se gostou, deixe uma estrela!</a>
+  </p>
 </div>

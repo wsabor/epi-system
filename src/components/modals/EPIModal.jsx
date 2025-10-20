@@ -320,7 +320,10 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
                   setFormData({ ...formData, dataValidade: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="dd/mm/yyyy"
+                pattern="\d{4}-\d{2}-\d{2}"
               />
+              <p className="text-xs text-gray-500 mt-1">Formato: DD/MM/AAAA</p>
             </div>
 
             {/* Dias para Aviso de Vencimento */}

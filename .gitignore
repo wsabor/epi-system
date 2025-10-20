@@ -23,8 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-refactor-helper.js
-/docs
 ALTERACOES-WHITELABEL.md
 CHECKLIST-DEPLOY.md
 CHECKLIST.md

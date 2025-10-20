@@ -12,6 +12,38 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
     observacoes: "",
   });
 
+  // Opções de motivo por tipo de movimentação
+  const motivosPorTipo = {
+    entrada: [
+      "Compra de novos EPIs",
+      "Devolução de EPI não utilizado",
+      "Doação recebida",
+      "Transferência de outro setor",
+      "Outros",
+    ],
+    saida: [
+      "Entrega para funcionário",
+      "Substituição de EPI danificado",
+      "Transferência para outro setor",
+      "Empréstimo temporário",
+      "Outros",
+    ],
+    ajuste: [
+      "Correção de inventário",
+      "Erro de contagem",
+      "Diferença de estoque",
+      "Recontagem",
+      "Outros",
+    ],
+    perda: [
+      "EPI danificado/avariado",
+      "Extravio/perda",
+      "Vencimento/validade expirada",
+      "Descarte por má qualidade",
+      "Outros",
+    ],
+  };
+
   // Resetar form quando abrir
   useEffect(() => {
     if (isOpen) {
@@ -72,6 +104,7 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
   if (!isOpen) return null;
 
   const epiSelecionado = epis.find((epi) => epi.id === formData.epiId);
+  const motivosDisponiveis = motivosPorTipo[formData.tipoMovimentacao] || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -126,7 +159,11 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
                 required
                 value={formData.tipoMovimentacao}
                 onChange={(e) =>
-                  setFormData({ ...formData, tipoMovimentacao: e.target.value })
+                  setFormData({ 
+                    ...formData, 
+                    tipoMovimentacao: e.target.value,
+                    motivo: "" // Limpar motivo ao mudar tipo
+                  })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
@@ -205,43 +242,74 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
               </div>
             )}
 
-            {/* Motivo */}
-            <div
-              className={
-                formData.tipoMovimentacao === "saida" ? "" : "md:col-span-2"
-              }
-            >
+            {/* Motivo - Select ou Input */}
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Motivo <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                required
-                value={formData.motivo}
-                onChange={(e) =>
-                  setFormData({ ...formData, motivo: e.target.value })
-                }
-                placeholder="Ex: Compra, Entrega para funcionário, Inventário, Avaria..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              />
+              {formData.tipoMovimentacao ? (
+                <select
+                  required
+                  value={formData.motivo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, motivo: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  <option value="">Selecione o motivo</option>
+                  {motivosDisponiveis.map((motivo, index) => (
+                    <option key={index} value={motivo}>
+                      {motivo}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  disabled
+                  placeholder="Selecione primeiro o tipo de movimentação"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-400"
+                />
+              )}
             </div>
+
+            {/* Campo de texto para "Outros" */}
+            {formData.motivo === "Outros" && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Especifique o Motivo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.observacoes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, observacoes: e.target.value })
+                  }
+                  placeholder="Descreva o motivo da movimentação..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Observações */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observações
-            </label>
-            <textarea
-              rows="3"
-              value={formData.observacoes}
-              onChange={(e) =>
-                setFormData({ ...formData, observacoes: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="Observações adicionais..."
-            />
-          </div>
+          {/* Observações (somente se não for "Outros") */}
+          {formData.motivo !== "Outros" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Observações
+              </label>
+              <textarea
+                rows="3"
+                value={formData.observacoes}
+                onChange={(e) =>
+                  setFormData({ ...formData, observacoes: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Observações adicionais..."
+              />
+            </div>
+          )}
 
           {/* Botões */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
