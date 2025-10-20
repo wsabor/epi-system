@@ -1,9 +1,8 @@
 # 🛡️ EPI System - Sistema de Gestão de EPIs
 
-[![GitHub release](https://img.shields.io/github/v/release/wsabor/epi-system?style=for-the-badge)](https://github.com/wsabor/epi-system/releases)
-
 <div align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge" alt="Version">
+  <a href="https://github.com/wsabor/epi-system/releases">
+  <img src="https://img.shields.io/github/v/release/wsabor/epi-system?style=for-the-badge" alt="Version"></a>
   <img src="https://img.shields.io/badge/React-19.1.1-blue?style=for-the-badge&logo=react" alt="React">
   <img src="https://img.shields.io/badge/Firebase-12.2.1-orange?style=for-the-badge&logo=firebase" alt="Firebase">
   <img src="https://img.shields.io/badge/Tailwind-3.4.17-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind">
