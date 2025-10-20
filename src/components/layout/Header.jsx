@@ -28,7 +28,7 @@ const Header = ({ sidebarOpen, setSidebarOpen, alertas, userProfile }) => {
 
         {/* Logo/Título no mobile */}
         <div className="md:hidden">
-          <h1 className="text-lg font-bold text-gray-900">EPIs SENAI</h1>
+          <h1 className="text-lg font-bold text-gray-900">EPIs</h1>
         </div>
 
         {/* Espaçador */}

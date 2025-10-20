@@ -56,7 +56,7 @@ const ForgotPassword = ({ onToggleLogin }) => {
           <h1 className="text-3xl font-bold text-white mb-2">
             Recuperar Senha
           </h1>
-          <p className="text-red-100">Sistema de Controle EPIs - SENAI</p>
+          <p className="text-red-100">Sistema de Controle EPIs</p>
         </div>
 
         {/* Card de Recuperação */}
@@ -141,7 +141,7 @@ const ForgotPassword = ({ onToggleLogin }) => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-red-100 text-sm">
-          <p>© 2025 SENAI São Paulo. Todos os direitos reservados.</p>
+          <p>© 2025 wsabor.dev - Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

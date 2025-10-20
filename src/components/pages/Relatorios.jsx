@@ -168,7 +168,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
       doc.rect(0, 0, 210, 40, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
-      doc.text("SENAI Santo Paschoal Crepaldi", 105, 15, { align: "center" });
+      doc.text("EPI System", 105, 15, { align: "center" });
       doc.setFontSize(16);
       doc.text("Relatório de Estoque de EPIs", 105, 25, { align: "center" });
       doc.setFontSize(10);
@@ -304,7 +304,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
       doc.rect(0, 0, 210, 40, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
-      doc.text("SENAI Santo Paschoal Crepaldi", 105, 15, { align: "center" });
+      doc.text("EPI System", 105, 15, { align: "center" });
       doc.setFontSize(16);
       doc.text("Relatório de Movimentações", 105, 25, { align: "center" });
       doc.setFontSize(10);

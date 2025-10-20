@@ -54,7 +54,7 @@ const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
           <h1 className="text-3xl font-bold text-white mb-2">
             Sistema de Controle EPIs
           </h1>
-          <p className="text-red-100">SENAI São Paulo</p>
+          <p className="text-red-100">EPI System</p>
         </div>
 
         {/* Card de Login */}
@@ -165,7 +165,7 @@ const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-red-100 text-sm">
-          <p>© 2025 SENAI São Paulo. Todos os direitos reservados.</p>
+          <p>© 2025 wsabor.dev - Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

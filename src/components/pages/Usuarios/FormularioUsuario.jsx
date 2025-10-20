@@ -127,7 +127,7 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
                   erros.email ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="email@senai.br"
+                placeholder="email@provedor.br"
               />
               {erros.email && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">

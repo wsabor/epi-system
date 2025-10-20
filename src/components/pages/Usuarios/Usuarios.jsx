@@ -18,6 +18,7 @@ import {
 import FormularioUsuario from "./FormularioUsuario";
 import ModalConfirmacao from "./ModalConfirmacao";
 import LogAuditoria from "./LogAuditoria";
+import ConviteUsuarioModal from "../../modals/ConviteUsuarioModal";
 
 import { useUsuarios } from "../../../hooks/useUsuarios";
 import { useLogs } from "../../../hooks/useLogs";
@@ -41,6 +42,7 @@ const Usuarios = () => {
   const [filtroRole, setFiltroRole] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarConvite, setMostrarConvite] = useState(false);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
   const [modalConfirmacao, setModalConfirmacao] = useState({
     aberto: false,
@@ -118,8 +120,7 @@ const Usuarios = () => {
 
   // Handlers
   const handleNovoUsuario = () => {
-    setUsuarioEditando(null);
-    setMostrarFormulario(true);
+    setMostrarConvite(true);
   };
 
   const handleEditarUsuario = (usuario) => {
@@ -272,6 +273,15 @@ const Usuarios = () => {
 
   return (
     <div className="space-y-6">
+      {/* Modal de Convite */}
+      <ConviteUsuarioModal
+        isOpen={mostrarConvite}
+        onClose={() => setMostrarConvite(false)}
+        onSuccess={() => {
+          alert("✅ Convite enviado com sucesso!");
+        }}
+      />
+
       {/* Modal de Confirmação */}
       <ModalConfirmacao
         aberto={modalConfirmacao.aberto}

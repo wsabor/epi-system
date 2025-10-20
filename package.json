@@ -1,5 +1,5 @@
 {
-  "name": "senai-epi-system",
+  "name": "epi-system",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "firebase": "^12.2.1",
     "fs": "^0.0.1-security",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.544.0",
     "path": "^0.12.7",
+    "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4",
