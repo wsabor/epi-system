@@ -51,10 +51,8 @@ const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
             <Shield className="w-10 h-10 text-red-600" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Sistema de Controle EPIs
-          </h1>
-          <p className="text-red-100">EPI System</p>
+          <h1 className="text-3xl font-bold text-white mb-2">EPI System</h1>
+          <p className="text-red-100">Sistema de Controle EPIs</p>
         </div>
 
         {/* Card de Login */}
