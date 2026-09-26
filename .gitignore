@@ -38,3 +38,6 @@ firestore-rules-debug.txt
 
 # Prisma Client gerado
 api/src/generated/
+
+# Certificado raiz do Caddy exportado para instalar nos navegadores (docs/DEPLOY.md)
+caddy-root.crt

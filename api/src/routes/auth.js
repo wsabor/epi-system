@@ -118,11 +118,16 @@ authRouter.post("/esqueci-senha", limiteEsqueciSenha, async (req, res) => {
       await registrarLog(req, { acao: "SENHA_REDEFINICAO_SOLICITAR", usuarioId: usuario.id }, tx);
     });
 
-    await enviarEmailRedefinicaoSenha({
-      nome: usuario.nome,
-      email: usuario.email,
-      link: `${config.APP_URL}/redefinir-senha/${token}`,
-    });
+    // Falha de e-mail não muda a resposta (não revela se o e-mail existe); fica no log da API.
+    try {
+      await enviarEmailRedefinicaoSenha({
+        nome: usuario.nome,
+        email: usuario.email,
+        link: `${config.APP_URL}/redefinir-senha/${token}`,
+      });
+    } catch (err) {
+      console.error("Falha ao enviar e-mail de redefinição de senha:", err.message);
+    }
   }
 
   // Mesma resposta exista ou não o e-mail: não revela quem tem cadastro.

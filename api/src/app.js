@@ -1,6 +1,7 @@
 import express from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import { config } from "./config.js";
 import { autenticar, permitir } from "./middlewares/autenticar.js";
 import { rotaNaoEncontrada, tratarErros } from "./middlewares/erros.js";
 import { authRouter } from "./routes/auth.js";
@@ -14,9 +15,9 @@ import { usuariosRouter } from "./routes/usuarios.js";
 
 export const app = express();
 
-// Um proxy na frente (nginx em produção, Vite em dev): o IP real do cliente vem no X-Forwarded-For.
-// Confiar só em 1 salto impede que o cliente forje o IP mandando o próprio cabeçalho.
-app.set("trust proxy", 1);
+// O IP real do cliente vem no X-Forwarded-For. Confiar exatamente no número de proxies que existem
+// (TRUST_PROXY) impede que o cliente forje o IP mandando o próprio cabeçalho.
+app.set("trust proxy", config.TRUST_PROXY);
 
 app.use(helmet());
 app.use(express.json());

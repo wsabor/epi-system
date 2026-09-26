@@ -52,7 +52,7 @@ async function convidar(email, role) {
 }
 const emailOp = `op${sufixo}@teste.com`;
 r = await convidar(emailOp.toUpperCase(), "operador");
-checar("convite operador criado (e-mail normalizado, e-mail 'enviado' no console)", r.status === 201 && r.corpo.convite.email === emailOp && r.corpo.emailEnviado, r.corpo);
+checar("convite operador criado (e-mail normalizado; enviado ou falha informada)", r.status === 201 && r.corpo.convite.email === emailOp && (r.corpo.emailEnviado || Boolean(r.corpo.erroEmail)), r.corpo);
 const tokenOp = r.corpo.link.split("/").pop();
 
 const anonimo = cliente();

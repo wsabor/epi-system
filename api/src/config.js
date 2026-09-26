@@ -9,6 +9,8 @@ const esquema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3000),
   JWT_SEGREDO: z.string(obrigatorio).min(32, "precisa ter pelo menos 32 caracteres"),
   COOKIE_SECURE: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
+  // Quantos proxies há na frente da API: 1 = só nginx (ou Vite em dev); 2 = Caddy (HTTPS) + nginx.
+  TRUST_PROXY: z.coerce.number().int().min(1).max(3).default(1),
   APP_URL: z.url({ error: "obrigatório (URL completa, ex.: http://localhost:5173)" }),
   EMAILJS_SERVICE_ID: emProducao(z.string(obrigatorio)),
   EMAILJS_PUBLIC_KEY: emProducao(z.string(obrigatorio)),

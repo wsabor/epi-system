@@ -1,0 +1,15 @@
+# HTTPS na frente do nginx (ativado com COMPOSE_PROFILES=https no .env). Tudo vem do .env:
+#
+#   SITE_ENDERECO=epi.exemplo.com.br  -> domínio público: certificado Let's Encrypt automático
+#   SITE_ENDERECO=10.0.0.50           -> IP ou nome interno: certificado da CA própria do Caddy
+#   CADDY_TLS=tls internal            -> obrigatório para nomes internos que não sejam IP/.local/.internal
+#
+# Com certificado interno, cada navegador mostra aviso até a CA do Caddy ser instalada nas máquinas
+# (arquivo /data/caddy/pki/authorities/local/root.crt do volume caddy_dados; ver docs/DEPLOY.md).
+
+{$SITE_ENDERECO} {
+	{$CADDY_TLS}
+	encode gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy web:80
+}

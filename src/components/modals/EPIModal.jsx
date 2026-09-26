@@ -42,15 +42,15 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
 
   const getTamanhosOptions = () => opcoes?.tamanhosPorCategoria[formData.categoria] ?? [];
 
-  // Resetar tamanho quando categoria mudar
-  useEffect(() => {
-    if (formData.categoria && opcoes) {
-      const tamanhos = opcoes.tamanhosPorCategoria[formData.categoria] ?? [];
-      if (!tamanhos.includes(formData.tamanho)) {
-        setFormData((prev) => ({ ...prev, tamanho: tamanhos.length === 1 ? tamanhos[0] : "" }));
-      }
-    }
-  }, [formData.categoria, formData.tamanho, opcoes]);
+  // Ao trocar a categoria, o tamanho é recalculado na hora (categoria de tamanho único já vem preenchida).
+  const mudarCategoria = (categoria) => {
+    const tamanhos = opcoes?.tamanhosPorCategoria[categoria] ?? [];
+    setFormData((prev) => ({
+      ...prev,
+      categoria,
+      tamanho: tamanhos.includes(prev.tamanho) ? prev.tamanho : tamanhos.length === 1 ? tamanhos[0] : "",
+    }));
+  };
 
   // Submeter formulário: a quantidade não vai na edição (estoque só muda por movimentação).
   const handleSubmit = async (e) => {
@@ -142,9 +142,7 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
               <select
                 required
                 value={formData.categoria}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoria: e.target.value })
-                }
+                onChange={(e) => mudarCategoria(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
                 <option value="">Selecione uma categoria</option>

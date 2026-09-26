@@ -1,0 +1,85 @@
+# Produção: frontend (nginx) + API + PostgreSQL. Configuração no .env da raiz (modelo: .env.example).
+#   docker compose up -d --build
+# Com HTTPS pelo Caddy na própria VM: COMPOSE_PROFILES=https no .env (ver docs/DEPLOY.md).
+name: epi-system
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    # Sem "ports": o banco só é acessível pela rede interna do Docker.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      API_PORT: 3000
+      APP_URL: ${APP_URL:?defina APP_URL no .env}
+      JWT_SEGREDO: ${JWT_SEGREDO:?defina JWT_SEGREDO no .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      EMAILJS_SERVICE_ID: ${EMAILJS_SERVICE_ID:-}
+      EMAILJS_PUBLIC_KEY: ${EMAILJS_PUBLIC_KEY:-}
+      EMAILJS_PRIVATE_KEY: ${EMAILJS_PRIVATE_KEY:-}
+      EMAILJS_TEMPLATE_CONVITE: ${EMAILJS_TEMPLATE_CONVITE:-}
+      EMAILJS_TEMPLATE_REDEFINIR_SENHA: ${EMAILJS_TEMPLATE_REDEFINIR_SENHA:-}
+      # Só usados pelo seed (docker compose exec api npm run db:seed)
+      ADMIN_INICIAL_NOME: ${ADMIN_INICIAL_NOME:-Administrador}
+      ADMIN_INICIAL_EMAIL: ${ADMIN_INICIAL_EMAIL:-}
+      ADMIN_INICIAL_SENHA: ${ADMIN_INICIAL_SENHA:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Sem "ports": a API só é acessada pelo nginx (senão o cliente poderia forjar o IP nos logs).
+
+  web:
+    build:
+      context: .
+      args:
+        VITE_EMAIL_SOLICITAR_ACESSO: ${VITE_EMAIL_SOLICITAR_ACESSO:-}
+    restart: unless-stopped
+    ports:
+      # Sem HTTPS: "80". Com o Caddy na frente: "127.0.0.1:8080" (só o Caddy fala com o nginx).
+      - "${WEB_PORTA:-80}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      # Passa pelo nginx até a API e o banco: "saudável" = o sistema inteiro responde.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ENDERECO: ${SITE_ENDERECO:-}
+      CADDY_TLS: ${CADDY_TLS:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  caddy_dados:

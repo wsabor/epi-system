@@ -3,518 +3,163 @@
 <div align="center">
   <a href="https://github.com/wsabor/epi-system/releases">
   <img src="https://img.shields.io/github/v/release/wsabor/epi-system?style=for-the-badge" alt="Version"></a>
-  <img src="https://img.shields.io/badge/React-19.1.1-blue?style=for-the-badge&logo=react" alt="React">
-  <img src="https://img.shields.io/badge/Firebase-12.2.1-orange?style=for-the-badge&logo=firebase" alt="Firebase">
-  <img src="https://img.shields.io/badge/Tailwind-3.4.17-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind">
+  <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Node.js-24-339933?style=for-the-badge&logo=nodedotjs" alt="Node.js">
+  <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?style=for-the-badge&logo=postgresql" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker" alt="Docker">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </div>
 
 <br>
 
 <div align="center">
-  <p><strong>Sistema completo para gerenciamento de Equipamentos de Proteção Individual</strong></p>
-  <p>Solução moderna e intuitiva para controle de estoque, movimentações e relatórios de EPIs</p>
-  <p>
-    <a href="https://epi-system.wsabor.dev" target="_blank">🌐 Ver Demo</a> •
-    <a href="#-instalação">📦 Instalação</a> •
-    <a href="#-funcionalidades">⚡ Funcionalidades</a> •
-    <a href="#-tecnologias-utilizadas">🛠️ Tecnologias</a>
-  </p>
+  <p><strong>Sistema para gerenciamento de Equipamentos de Proteção Individual</strong></p>
+  <p>Controle de estoque, movimentações rastreáveis, relatórios e auditoria — hospedado na sua própria infraestrutura</p>
 </div>
-
----
-
-## 📋 Índice
-
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Demo Online](#-demo-online)
-- [Funcionalidades](#-funcionalidades)
-- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [Pré-requisitos](#-pré-requisitos)
-- [Instalação](#-instalação)
-- [Configuração](#-configuração)
-- [Como Usar](#-como-usar)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Sistema de Permissões](#-sistema-de-permissões)
-- [Screenshots](#-screenshots)
-- [Roadmap](#-roadmap)
-- [Deploy](#-deploy)
-- [Licença](#-licença)
-- [Contato](#-contato)
 
 ---
 
 ## 🎯 Sobre o Projeto
 
-O **EPI System** é uma aplicação web moderna e responsiva desenvolvida para otimizar o gerenciamento completo do ciclo de vida dos Equipamentos de Proteção Individual, desde a entrada no estoque até a distribuição aos funcionários.
+O **EPI System** controla o ciclo de vida dos EPIs, da entrada no estoque à entrega ao funcionário, com histórico completo e imutável de cada movimentação.
 
-### 💡 Problema que resolve:
-
-- ❌ Controle manual de EPIs propenso a erros
-- ❌ Falta de rastreabilidade de movimentações
-- ❌ Dificuldade em gerar relatórios
-- ❌ Perda de EPIs por vencimento
-- ❌ Gestão ineficiente de estoque
-
-### ✅ Solução oferecida:
-
-- ✅ **Controle digitalizado** em tempo real
-- ✅ **Rastreamento completo** de movimentações
-- ✅ **Alertas automáticos** de vencimento e estoque baixo
-- ✅ **Relatórios PDF/Excel** instantâneos
-- ✅ **Sistema de permissões** por função
-- ✅ **Auditoria completa** de ações
-- ✅ **Interface moderna** e intuitiva
-- ✅ **Sistema de convites** com QR Code e email
-
----
-
-## 🌐 Demo Online
-
-🚀 **Acesse a aplicação**: [https://epi-system.wsabor.dev](https://epi-system.wsabor.dev)
-
-### Credenciais de Teste:
-
-**Administrador:**
-
-- Email: `admin@demo.com`
-- Senha: `demo123`
-
-**Operador:**
-
-- Email: `operador@demo.com`
-- Senha: `demo123`
-
-**Visualizador:**
-
-- Email: `viewer@demo.com`
-- Senha: `demo123`
-
-> ⚠️ **Nota**: Esta é uma versão de demonstração. Os dados podem ser resetados periodicamente.
-
----
+- ✅ Estoque em tempo real, com alertas de **vencimento** e **estoque mínimo**
+- ✅ **Histórico imutável**: toda alteração de estoque é uma movimentação registrada (quem, quando, quanto, por quê, para quem)
+- ✅ **Nada com histórico é excluído**: EPIs e usuários são desativados, não apagados
+- ✅ **Relatórios** em PDF e Excel
+- ✅ **Controle de acesso por função** (administrador, operador, visualizador), aplicado no servidor
+- ✅ **Auditoria** de todas as operações, com usuário, data e IP
+- ✅ **Acesso somente por convite** (e-mail ou QR Code)
+- ✅ **Infraestrutura própria**: PostgreSQL e API em Docker, sem dependência de serviços de nuvem
 
 ## ⚡ Funcionalidades
 
-### 🏠 Dashboard Inteligente
+| Área | O que faz |
+|---|---|
+| 🏠 **Dashboard** | Visão geral do estoque, alertas e gráficos por categoria |
+| 📦 **Controle de Estoque** | Cadastro e edição de EPIs (CA, validade, fornecedor, estoque mínimo); desativação e reativação |
+| 🔄 **Movimentações** | Entrada, saída (com registro de quem recebeu), ajuste de inventário e perda; o saldo é calculado e validado no servidor |
+| 📊 **Relatórios** | Estoque, movimentações por período e vencimentos, com exportação para PDF e Excel |
+| 👥 **Usuários** | Convites com validade de 7 dias, edição, desativação e log de auditoria por usuário ou geral |
+| 🔐 **Conta** | Login, troca de senha e recuperação de senha por e-mail |
 
-- 📊 Visão geral do estoque em tempo real
-- 📈 Indicadores visuais (EPIs ativos, vencidos, estoque baixo)
-- 📉 Gráficos interativos de distribuição por categoria
-- ⏰ Timeline de movimentações recentes
-- 🔔 Alertas automáticos de estoque crítico
+### Permissões
 
-### 📦 Controle de Estoque
+| Ação | Administrador | Operador | Visualizador |
+|---|:---:|:---:|:---:|
+| Ver dashboard, estoque e movimentações | ✔ | ✔ | ✔ |
+| Cadastrar e editar EPIs | ✔ | ✔ | — |
+| Registrar movimentações | ✔ | ✔ | — |
+| Gerar e exportar relatórios | ✔ | ✔ | — |
+| Ativar e desativar EPIs | ✔ | — | — |
+| Convidar e gerenciar usuários, ver auditoria | ✔ | — | — |
 
-- ➕ **CRUD completo** de EPIs
-- 📝 **Cadastro detalhado** com:
-  - Informações básicas (descrição, marca, tamanho, CA)
-  - Controle de quantidade e estoque mínimo
-  - Datas de validade com alertas inteligentes
-  - Valores, custos e fornecedores
-- 🔍 **Busca e filtros avançados**
-- 👁️ **Modal de detalhes** com histórico completo
-- ⚡ **Validações em tempo real**
+## 🛠️ Tecnologias
 
-### 🔄 Movimentações
+| Camada | Tecnologias |
+|---|---|
+| Frontend | React 19, Vite, Tailwind CSS 4, React Router, Recharts, jsPDF, SheetJS, Lucide |
+| API | Node.js 24, Express 5, Zod, Prisma 7, bcrypt, JWT em cookie `HttpOnly` |
+| Banco | PostgreSQL 18 |
+| Infraestrutura | Docker Compose, nginx, Caddy (HTTPS) |
+| E-mail | EmailJS (chamado pela API) |
 
-- 📥 **Entrada**: Compras e recebimentos
-- 📤 **Saída**: Distribuição aos funcionários
-- ⚙️ **Ajuste**: Correções de inventário
-- ⚠️ **Perda**: Registro de danos/extravios
-- 📝 **Histórico completo** com timestamps
-- 👤 **Rastreamento de responsáveis**
-- 🔗 **Integração automática** com estoque
-
-### 📊 Relatórios Profissionais
-
-- 📄 **Relatório de Estoque**: Visão completa com valores
-- 📋 **Relatório de Movimentações**: Histórico detalhado
-- ⏰ **Relatório de Vencimentos**: EPIs vencidos e próximos
-- 📈 **Dashboard Avançado**: Análises estatísticas
-- 💾 **Exportação**: PDF e Excel
-- 🎨 **Design profissional** com tabelas formatadas
-
-### 👥 Gerenciamento de Usuários
-
-- 🔐 **3 níveis de permissão**:
-  - **Administrador**: Acesso total
-  - **Operador**: Gerencia EPIs e movimentações
-  - **Visualizador**: Apenas consulta
-- 📧 **Sistema de convites** por email
-- 📱 **QR Code** para acesso rápido
-- ✅ **Ativação/desativação** de contas
-- 📜 **Log de auditoria** completo
-
-### 🔐 Autenticação e Segurança
-
-- 🔑 Firebase Authentication
-- 📧 Login com email/senha
-- 🔄 Registro de novos usuários
-- 🔓 Recuperação de senha
-- 🛡️ Proteção de rotas
-- 💾 Sessão persistente
-- 🚪 Logout seguro
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-### Frontend
+### Arquitetura
 
 ```
-React 19.1.1          - Biblioteca JavaScript para interfaces
-Vite 7.1.2            - Build tool e dev server ultrarrápido
-Tailwind CSS 3.4.17   - Framework CSS utility-first
-React Router 7.9.4    - Roteamento de páginas
-Lucide React 0.544.0  - Ícones modernos e elegantes
-Recharts 3.2.1        - Biblioteca de gráficos interativos
+Navegador ──► Caddy (HTTPS, opcional) ──► nginx (frontend + /api) ──► API Node.js ──► PostgreSQL
+                                                                           └──► EmailJS
 ```
 
-### Backend/Database
+Só o nginx (ou o Caddy) fica exposto na rede. A API e o banco ficam na rede interna do Docker.
 
-```
-Firebase 12.2.1
-├── Authentication    - Autenticação de usuários
-├── Firestore        - Banco NoSQL em tempo real
-└── Hosting          - Deploy e hospedagem
-```
+## 🚀 Rodando em desenvolvimento
 
-### Bibliotecas Auxiliares
-
-```
-jsPDF 3.0.3              - Geração de PDFs
-jsPDF-AutoTable 5.0.2    - Tabelas em PDFs
-SheetJS (xlsx) 0.18.5    - Geração de Excel
-EmailJS 4.4.1            - Envio de emails
-QRCode.React 4.2.0       - Geração de QR Codes
-```
-
-### Dev Tools
-
-```
-ESLint 9.33.0        - Linting de código
-PostCSS 8.5.6        - Processamento CSS
-Autoprefixer 10.4.21 - Prefixos CSS automáticos
-```
-
----
-
-## 📦 Pré-requisitos
-
-Antes de começar, certifique-se de ter instalado:
-
-- ✅ **Node.js** 18+ ([Download](https://nodejs.org/))
-- ✅ **npm** ou **yarn**
-- ✅ Conta no **Firebase** ([Criar conta gratuita](https://firebase.google.com/))
-- ✅ Conta no **EmailJS** ([Criar conta](https://www.emailjs.com/)) - Opcional
-- ✅ Editor de código (recomendado: [VS Code](https://code.visualstudio.com/))
-
----
-
-## 🚀 Instalação
-
-### 1️⃣ Clone o repositório
+Pré-requisitos: **Node.js 24** e **Docker**.
 
 ```bash
 git clone https://github.com/wsabor/epi-system.git
 cd epi-system
-```
+cp .env.example .env                                   # ajuste se quiser; os padrões funcionam em dev
 
-### 2️⃣ Instale as dependências
+docker compose -f docker-compose.dev.yml up -d --wait  # PostgreSQL
 
-```bash
+cd api
+npm install                                            # também gera o Prisma Client
+npm run db:migrate                                     # cria as tabelas
+npm run db:seed                                        # cria o administrador do .env
+npm run dev                                            # API em http://localhost:3000
+
+# em outro terminal, na raiz do projeto
 npm install
+npm run dev                                            # frontend em http://localhost:5173
 ```
 
-### 3️⃣ Configure o Firebase
+Entre com `ADMIN_INICIAL_EMAIL` / `ADMIN_INICIAL_SENHA` do `.env`. Sem o EmailJS configurado, os e-mails (convite, redefinição de senha) aparecem no console da API.
 
-#### a) Crie um projeto no Firebase:
+### Testes
 
-1. Acesse [Firebase Console](https://console.firebase.google.com/)
-2. Clique em "Adicionar projeto"
-3. Siga os passos de configuração
-
-#### b) Configure Authentication:
-
-1. No Firebase Console, vá em **Authentication**
-2. Clique em **"Get Started"**
-3. Ative **Email/Password** como provedor
-
-#### c) Configure Firestore:
-
-1. Vá em **Firestore Database**
-2. Clique em **"Criar banco de dados"**
-3. Escolha **"Iniciar no modo de produção"**
-4. Selecione a localização (southamerica-east1)
-
-#### d) Obtenha as credenciais:
-
-1. Vá em **Configurações do projeto** (ícone de engrenagem)
-2. Role até **"Seus aplicativos"**
-3. Clique no ícone **</>** (Web)
-4. Registre o app
-5. Copie as credenciais do Firebase
-
-### 4️⃣ Configure as variáveis de ambiente
-
-Crie um arquivo `.env.local` na raiz do projeto:
-
-```env
-VITE_FIREBASE_API_KEY=sua_api_key_aqui
-VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=seu_projeto_id
-VITE_FIREBASE_STORAGE_BUCKET=seu_projeto.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=seu_sender_id
-VITE_FIREBASE_APP_ID=seu_app_id
-```
-
-> ⚠️ **IMPORTANTE**:
->
-> - Nunca commite o arquivo `.env.local` no Git!
-> - O arquivo `.gitignore` já está configurado para ignorá-lo
-
-### 5️⃣ Configure as regras do Firestore
-
-No Firebase Console → **Firestore Database** → **Regras**, cole:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() &&
-             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    match /epis/{epiId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /movimentacoes/{movimentacaoId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    match /usuarios/{userId} {
-      allow read: if isAuthenticated();
-      allow update, delete: if isAdmin();
-      allow create: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /convites/{conviteId} {
-      allow create: if isAdmin();
-      allow list: if isAdmin();
-      allow get: if true;
-      allow update: if request.resource.data.usado == true &&
-                       resource.data.usado == false;
-    }
-
-    match /logs/{logId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if false;
-    }
-  }
-}
-```
-
-Clique em **"Publicar"**.
-
-### 6️⃣ Execute o projeto
+Com a API e o frontend rodando:
 
 ```bash
-npm run dev
+cd api
+npm run test:api   # 52 cenários de ponta a ponta na API (permissões, estoque, concorrência, convites...)
+npm run test:ui    # 39 verificações no Chrome instalado na máquina (fluxos completos de cada perfil)
 ```
 
-🎉 Acesse: **http://localhost:5173**
+Os testes criam dados de exemplo: use só em desenvolvimento.
 
----
+## 🏭 Produção
 
-## ⚙️ Configuração
+Tudo sobe com Docker Compose a partir do mesmo `.env`:
 
-### 🔐 Criando o Primeiro Usuário Admin
+```bash
+cp .env.example .env && chmod 600 .env   # preencha com segredos novos
+docker compose up -d --build
+docker compose exec api ./node_modules/.bin/prisma db seed
+```
 
-#### Método 1: Via Firebase Console (Recomendado)
-
-1. **Firebase Console** → **Authentication** → **Add user**
-2. Adicione:
-   - Email: `admin@seudominio.com`
-   - Senha: `senha_segura_123`
-3. Copie o **UID** do usuário
-4. Vá em **Firestore Database** → **Adicionar documento**
-5. Collection: `usuarios`, Document ID: **Cole o UID**
-6. Campos:
-   ```
-   nome: "Admin Sistema"
-   email: "admin@seudominio.com"
-   role: "admin"
-   departamento: "TI"
-   telefone: "(11) 98765-4321"
-   ativo: true
-   dataCriacao: [timestamp atual]
-   ultimoAcesso: null
-   ```
-7. Salvar
-
-✅ Pronto! Faça login com esse usuário.
-
-#### Método 2: Via Registro na Aplicação
-
-1. Acesse a tela de registro
-2. Preencha os dados
-3. Após criar, vá no Firestore e **mude o role para "admin"**
-
-### 📧 Configurar EmailJS (Opcional - Sistema de Convites)
-
-1. Acesse [EmailJS](https://www.emailjs.com/) e crie uma conta
-2. Adicione um serviço de email (Gmail recomendado)
-3. Crie um template de email
-4. Copie: **Service ID**, **Template ID** e **Public Key**
-5. Edite `src/services/emailService.js`:
-   ```javascript
-   const EMAILJS_CONFIG = {
-     serviceId: "seu_service_id",
-     templateId: "seu_template_id",
-     publicKey: "sua_public_key",
-   };
-   ```
-
----
-
-## 📖 Como Usar
-
-### 1️⃣ Login no Sistema
-
-1. Acesse a aplicação
-2. Digite email e senha
-3. Clique em "Entrar"
-
-### 2️⃣ Cadastrar um EPI
-
-1. Menu lateral → **"Controle de Estoque"**
-2. Botão **"Novo EPI"**
-3. Preencha:
-   - Descrição, categoria, tamanho
-   - Quantidade atual e mínima
-   - Marca, nº CA, validade
-   - Valor unitário e fornecedor
-4. **"Salvar"**
-
-### 3️⃣ Registrar Movimentação
-
-1. **"Movimentações"** → **"Nova Movimentação"**
-2. Selecione o EPI
-3. Escolha o tipo:
-   - **Entrada**: Compra
-   - **Saída**: Entrega ao funcionário
-   - **Ajuste**: Correção
-   - **Perda**: Dano/Extravio
-4. Quantidade e responsável
-5. **"Salvar"**
-
-### 4️⃣ Gerar Relatórios
-
-1. **"Relatórios"**
-2. Escolha o tipo
-3. Aplique filtros
-4. **"Exportar PDF"** ou **"Exportar Excel"**
-
-### 5️⃣ Convidar Usuários
-
-1. **"Usuários"** → **"Novo Usuário"**
-2. Preencha dados e selecione função
-3. **"Enviar Convite"**
-4. Copie o link OU escaneie QR Code OU envie email
-
----
+Passo a passo completo — VM, HTTPS, backups e atualização — em **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ## 📁 Estrutura do Projeto
 
 ```
 epi-system/
-├── public/
-├── src/
-│   ├── components/
-│   │   ├── auth/                 # Autenticação
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
-│   │   │   ├── ForgotPassword.jsx
-│   │   │   ├── AceitarConvite.jsx
-│   │   │   └── AuthWrapper.jsx
-│   │   ├── layout/               # Layout
-│   │   │   ├── Header.jsx
-│   │   │   └── Sidebar.jsx
-│   │   ├── modals/               # Modais
-│   │   │   ├── EPIModal.jsx
-│   │   │   ├── EPIDetalhesModal.jsx
-│   │   │   ├── MovimentacaoModal.jsx
-│   │   │   ├── MovimentacaoDetalhesModal.jsx
-│   │   │   └── ConviteUsuarioModal.jsx
-│   │   ├── pages/                # Páginas
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── ControleEstoque.jsx
-│   │   │   ├── Movimentacoes.jsx
-│   │   │   ├── Relatorios.jsx
-│   │   │   ├── Sobre.jsx
-│   │   │   └── Usuarios/
-│   │   │       ├── Usuarios.jsx
-│   │   │       ├── FormularioUsuario.jsx
-│   │   │       ├── ModalConfirmacao.jsx
-│   │   │       └── LogAuditoria.jsx
-│   │   └── ui/                   # Componentes UI
-│   │       ├── StatsCard.jsx
-│   │       └── ProtectedAction.jsx
-│   ├── contexts/                 # Contextos React
-│   │   ├── AuthContext.jsx
-│   │   └── PermissionsContext.jsx
-│   ├── hooks/                    # Custom Hooks
-│   │   ├── useEPIs.js
-│   │   ├── useMovimentacoes.js
-│   │   ├── useUsuarios.js
-│   │   └── useLogs.js
-│   ├── services/                 # Serviços
-│   │   ├── firebase.js
-│   │   ├── epiServices.js
-│   │   ├── movimentacaoService.js
-│   │   └── emailService.js
-│   ├── utils/                    # Utilitários
-│   │   └── seedUsuarios.js
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── .env.local                    # Variáveis de ambiente
-├── .gitignore
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── vercel.json                   # Config deploy Vercel
-└── README.md
+├── src/                     # Frontend React
+│   ├── components/          # Telas, modais e layout
+│   ├── contexts/            # Sessão e permissões do usuário logado
+│   ├── hooks/               # Acesso aos dados da API
+│   ├── services/api.js      # Cliente HTTP
+│   └── utils/
+├── api/                     # API Node.js
+│   ├── prisma/              # Schema, migrations e seed
+│   ├── src/
+│   │   ├── routes/          # auth, epis, movimentacoes, usuarios, convites, logs, opcoes
+│   │   ├── middlewares/     # autenticação, permissões, erros, limites de tentativas
+│   │   ├── services/        # sessão, auditoria, e-mail, formatação
+│   │   ├── permissoes.js    # Matriz de permissões (fonte única)
+│   │   └── dominio.js       # Categorias, motivos, departamentos (fonte única)
+│   ├── scripts/             # Testes de ponta a ponta
+│   └── Dockerfile
+├── scripts/                 # Backup e restauração do banco
+├── docs/                    # ROADMAP e DEPLOY
+├── Dockerfile               # Frontend (build + nginx)
+├── nginx.conf
+├── Caddyfile
+├── docker-compose.yml       # Produção
+└── docker-compose.dev.yml   # Banco para desenvolvimento
 ```
 
----
+## 🔐 Segurança
 
-## 🔐 Sistema de Permissões
+- Autorização verificada **na API** a cada requisição; o frontend só esconde o que o usuário não pode usar
+- Sessão em cookie `HttpOnly` e `SameSite=Strict`; usuário desativado ou com senha trocada perde o acesso na hora
+- Senhas com bcrypt; links de convite e de redefinição de senha de uso único, guardados só como hash
+- Limite de tentativas de login por IP
+- Toda entrada validada no servidor; histórico e auditoria protegidos contra alteração pelo próprio banco
+- Cabeçalhos de segurança (CSP, `X-Frame-Options` etc.) no nginx; API e banco fora da rede pública
 
-| Funcionalidade          | 👑 Admin | 🔧 Operador | 👁️ Visualizador |
-| ----------------------- | :------: | :---------: | :-------------: |
-| Ver Dashboard           |    ✅    |     ✅      |       ✅        |
-| Ver Estoque             |    ✅    |     ✅      |       ✅        |
-| Criar/Editar EPIs       |    ✅    |     ✅      |       ❌        |
-| Excluir EPIs            |    ✅    |     ✅      |       ❌        |
-| Registrar Movimentações |    ✅    |     ✅      |       ❌        |
-| Gerar Relatórios        |    ✅    |     ✅      |       ✅        |
-| Gerenciar Usuários      |    ✅    |     ❌      |       ❌        |
-| Ver Logs de Auditoria   |    ✅    |     ❌      |       ❌        |
-| Convidar Usuários       |    ✅    |     ❌      |       ❌        |
-
----
+Encontrou uma falha de segurança? Escreva para o contato abaixo em vez de abrir uma issue pública.
 
 ## 📸 Screenshots
 
@@ -542,78 +187,15 @@ epi-system/
 
 <img src="docs/screenshots/convites.webp" alt="Convites" width="800">
 
----
-
 ## 🗺️ Roadmap
 
-### ✅ Versão 1.0 (Atual)
-
-- [x] Sistema de autenticação
-- [x] CRUD de EPIs completo
-- [x] Controle de movimentações
-- [x] Relatórios PDF/Excel
-- [x] Gerenciamento de usuários
-- [x] Sistema de permissões
-- [x] Sistema de convites com QR Code
-- [x] Modal de detalhes de EPIs
-- [x] Modal de detalhes de movimentações
-- [x] Página "Sobre"
-
-### 🚧 Versão 2.0 (Em Planejamento)
-
-- [ ] Notificações push em tempo real
-- [ ] Dashboard com IA e predições
-- [ ] Modo escuro (Dark Mode)
-- [ ] PWA - Funciona offline
-- [ ] Scanner de código de barras/QR Code
-- [ ] API REST pública
-- [ ] Aplicativo mobile (React Native)
-- [ ] Integração com WhatsApp
-
-### 💡 Versão 3.0 (Futuro)
-
-- [ ] IA para previsão de demanda
-- [ ] Integração com sistemas ERP
-- [ ] Relatórios avançados com BI
-- [ ] Multi-tenancy (várias empresas)
-- [ ] Módulo de treinamentos
-- [ ] Assinatura digital
-
----
-
-## 🤝 Contribuindo
-
-Contribuições são **muito bem-vindas**!
-
-### Como contribuir:
-
-1. Fork o projeto
-2. Crie uma branch: `git checkout -b feature/MinhaFeature`
-3. Commit: `git commit -m 'feat: Adiciona MinhaFeature'`
-4. Push: `git push origin feature/MinhaFeature`
-5. Abra um Pull Request
-
-### Padrões:
-
-- ✅ Use ESLint
-- ✅ Commits semânticos (feat, fix, docs, etc)
-- ✅ Comente código complexo
-- ✅ Teste antes de fazer PR
+Planejamento, decisões técnicas e próximos passos em **[docs/ROADMAP.md](docs/ROADMAP.md)**.
 
 ---
 
 ## 📄 Licença
 
 Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
-
-Isso significa que você pode:
-
-- ✅ Usar comercialmente
-- ✅ Modificar
-- ✅ Distribuir
-- ✅ Uso privado
-
----
 
 ## 📧 Contato
 
@@ -625,21 +207,6 @@ Isso significa que você pode:
 [![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wsabor.dev)
 
 **Link do Projeto**: [https://github.com/wsabor/epi-system](https://github.com/wsabor/epi-system)
-
-**Demo Online**: [https://epi-system.wsabor.dev](https://epi-system.wsabor.dev)
-
----
-
-## 🙏 Agradecimentos
-
-- [React](https://reactjs.org/) - Biblioteca incrível
-- [Firebase](https://firebase.google.com/) - Backend poderoso
-- [Tailwind CSS](https://tailwindcss.com/) - CSS moderno
-- [Lucide Icons](https://lucide.dev/) - Ícones lindos
-- [Recharts](https://recharts.org/) - Gráficos interativos
-- [Vite](https://vitejs.dev/) - Build ultrarrápido
-- [Vercel](https://vercel.com/) - Deploy simplificado
-- Comunidade Open Source ❤️
 
 ---
 

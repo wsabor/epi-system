@@ -222,7 +222,7 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 - [x] Página "Sobre" e `.env.example` sem Firebase
 - [x] Limpeza de dependências: removidos `firebase`, `@emailjs/browser`, `fs`, `path`, `postcss`, `autoprefixer`, `postcss.config.js` e `App.css` (vazio); `xlsx` trocado pelo build oficial do SheetJS 0.20.3 (**`npm audit`: 0 vulnerabilidades**); plugins do ESLint atualizados para o ESLint 10, o que permitiu apagar o `.npmrc` com `legacy-peer-deps` (conflitos de dependências não ficam mais escondidos); scripts de instalação: só `esbuild` liberado
 - [ ] ~~Relatórios salvos~~ → depois do go-live
-- [ ] README → reescrito na Fase 6 (junto com as instruções de Docker)
+- [x] README → reescrito na Fase 6
 
 **Bugs antigos encontrados e corrigidos no caminho**
 
@@ -236,25 +236,46 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 
 **Testes**
 
-- [x] [api/scripts/teste-ui.mjs](../api/scripts/teste-ui.mjs) (`cd api && npm run test:ui`, com API e Vite no ar): **40 verificações no Chrome de verdade** — login, cadastro/edição/movimentação/desativação de EPI, convite → aceite → visualizador com permissões restritas → desativação derruba a sessão, auditoria, alterar senha, logout, esqueci a senha, **zero erro de JavaScript no console**
+- [x] [api/scripts/teste-ui.mjs](../api/scripts/teste-ui.mjs) (`cd api && npm run test:ui`, com API e Vite no ar): **39 verificações no Chrome de verdade** (37 na Fase 5 + 2 de exportação PDF/Excel acrescentadas depois) — login, cadastro/edição/movimentação/desativação de EPI, convite → aceite → visualizador com permissões restritas → desativação derruba a sessão, auditoria, alterar senha, logout, esqueci a senha, **zero erro de JavaScript no console**
 - [x] `npm run test:api`: 52/52 continuam passando
 - [x] Lint zerado (API e frontend) e `vite build` ok
 
 ## Fase 6 — Dockerização
 
-- [ ] `api/Dockerfile` (**Node 24** slim, usuário não-root, `prisma generate` no build, `prisma migrate deploy` antes de subir)
-- [ ] `Dockerfile` do frontend: build do Vite → nginx com fallback de SPA (substitui o `rewrites` do [vercel.json](../vercel.json)) e proxy `/api`. Variáveis `VITE_*` entram como *build args* vindos do `.env` da raiz — mudar o e-mail de solicitação exige `docker compose build web`
-- [ ] `docker-compose.yml`: `web`, `api`, `db`; volume nomeado para o Postgres; healthchecks; `restart: unless-stopped`; porta do banco **não** exposta
-- [ ] nginx com cabeçalhos de segurança para o HTML/JS servido: `Content-Security-Policy` (só `'self'`), `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'`, `Strict-Transport-Security` quando houver HTTPS (o `helmet` já cobre as respostas da API, não o front)
-- [ ] `docker compose up` do zero numa máquina limpa sobe tudo e o admin do seed consegue logar
-- [ ] Remover [vercel.json](../vercel.json)
-- [ ] README reescrito: instalação com Docker, `.env`, primeiro acesso — **sem** credenciais de demonstração
+- [x] [api/Dockerfile](../api/Dockerfile): **Node 24 Alpine**, usuário não-root, `prisma generate` no build, `prisma migrate deploy` a cada partida, healthcheck, `exec` para receber o `SIGTERM`; npm/yarn removidos da imagem final
+- [x] [Dockerfile](../Dockerfile) do frontend: build do Vite → nginx (fallback de SPA no lugar do `vercel.json`, proxy `/api`, cache longo para `/assets`, `index.html` sem cache); `VITE_*` como *build args*
+- [x] [nginx.conf](../nginx.conf) com cabeçalhos de segurança: CSP só `'self'`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`
+- [x] [docker-compose.yml](../docker-compose.yml): `db`, `api`, `web` com healthchecks encadeados e `restart: unless-stopped`; **só o nginx publica porta**; variáveis obrigatórias falham com mensagem clara; `caddy` opcional (`COMPOSE_PROFILES=https`)
+- [x] [Caddyfile](../Caddyfile): HTTPS com Let's Encrypt (domínio público) ou CA própria (IP/nome interno), HSTS, redirecionamento HTTP→HTTPS
+- [x] `TRUST_PROXY` configurável (1 = nginx; 2 = Caddy + nginx) para o IP real do cliente nos logs
+- [x] Esqueci a senha: falha do EmailJS vai para o log e **não** muda a resposta
+- [x] [scripts/backup.sh](../scripts/backup.sh) (`pg_dump`, arquivo `600`, retenção 30 dias, gravação atômica) e [scripts/restaurar-backup.sh](../scripts/restaurar-backup.sh) (confirmação, backup de segurança antes, API parada durante)
+- [x] [docs/DEPLOY.md](DEPLOY.md): roteiro completo da VM (Docker, `.env`, HTTPS, backups, checklist, atualização)
+- [x] [README.md](../README.md) reescrito: sem Firebase e **sem credenciais de demonstração**
+- [x] `vercel.json` removido
+
+**Validado de ponta a ponta na stack Docker (máquina local, `.env` de teste com segredos aleatórios):**
+
+- `test:api` 52/52 e `test:ui` 39/39 **através do nginx, com a CSP ativa** (inclusive exportação PDF/Excel e zero erro de JavaScript)
+- Seed de produção, migrations na partida, dados preservados após `docker compose down` + `up`
+- Backup → alteração → restauração: dados voltam exatamente ao backup; triggers de imutabilidade preservadas
+- HTTPS pelo Caddy: HTTP→HTTPS (308), HSTS, cookie com `Secure`, IP real do cliente no log e `X-Forwarded-For` forjado **ignorado**; nginx acessível só em `127.0.0.1`
+- Varredura das imagens (`docker scout`): de **2 críticas + 13 altas** (API) e **13 críticas + 43 altas** (web) para **1 alta em cada**, sem risco prático — `mysql2` dentro do Prisma CLI (driver MySQL, nunca carregado) e `libxml2` do nginx (sem correção publicada no Alpine). Refazer o build periodicamente pega as correções novas (`apk upgrade` no build)
+
+**Notas técnicas da Fase 6**
+
+- O Prisma CLI passou para `dependencies`: é usado em produção (`migrate deploy`). O `npm ci --omit=dev` deixa de fora só ferramentas de teste.
+- Sem npm na imagem da API: o seed roda com `docker compose exec api ./node_modules/.bin/prisma db seed`.
+- Imagem da API ~730 MB (a maior parte é o Prisma CLI); dá para reduzir depois com build em estágios, sem urgência.
+- A resposta da API sai com dois cabeçalhos CSP (helmet + nginx); o navegador aplica os dois e, para JSON, é indiferente.
 
 ## ~~Fase 7 — Migração dos dados do Firestore~~ (removida)
 
 O sistema nunca foi para produção: o que existe no Firebase são dados de exemplo/teste. **Nada é migrado** — o sistema novo começa vazio, com o admin do seed.
 
 ## Fase 8 — Deploy no Proxmox (go-live)
+
+Roteiro de execução, comando a comando: **[docs/DEPLOY.md](DEPLOY.md)**. Pré-requisito: a branch `refactor/api-postgres` no GitHub (push) ou mesclada na `main`.
 
 - [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção: `JWT_SEGREDO` e senha do Postgres **novos e aleatórios**, `NODE_ENV=production`, `COOKIE_SECURE=true`; arquivo com `chmod 600`, dono root
 - [ ] Rodar o seed de produção, trocar a senha do admin inicial no primeiro login e **apagar `ADMIN_INICIAL_SENHA` do `.env`**
