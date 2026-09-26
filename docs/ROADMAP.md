@@ -60,6 +60,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 | 8 | Credenciais do EmailJS no código do frontend | [emailService.js](../src/services/emailService.js) | 4 |
 | 9 | Cadastro aberto para qualquer um que acesse a URL | [Register.jsx](../src/components/auth/Register.jsx) | 5 |
 | 10 | EPI é excluído de verdade, deixando movimentações apontando para um EPI que não existe mais | [epiServices.js:107-115](../src/services/epiServices.js#L107-L115) | 2, 4 |
+| 11 | Formulário de edição do EPI altera a quantidade direto, sem movimentação (saldo sem explicação no histórico) | [EPIModal.jsx:99](../src/components/modals/EPIModal.jsx#L99) | 4, 5 |
 
 ---
 
@@ -182,14 +183,27 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 
 ## Fase 4 — Rotas de domínio
 
-- [ ] `epis`: listar (filtro ativos/inativos/todos, padrão só ativos), criar, editar; `PATCH /api/epis/:id/ativo` só admin. **Sem rota de exclusão** (#10)
-- [ ] `movimentacoes`: listar (paginado), listar por EPI, **criar em transação** — lê o estoque com lock, calcula a nova quantidade no servidor, grava movimentação e EPI juntos; saída maior que o estoque é rejeitada em vez de "zerar" silenciosamente (#1). Movimentação em EPI inativo é rejeitada. **Sem rota de edição/exclusão**
-- [ ] `usuarios` (admin): listar, editar, ativar/desativar. **Sem exclusão e sem "criar" direto**: novo usuário só por convite (#5). Admin não pode desativar a si mesmo nem rebaixar o último admin
-- [ ] `convites` (admin): criar (token forte, e-mail via EmailJS no servidor — #6, #8), listar, revogar
-- [ ] `convites` (público): `GET /api/convites/:token` devolve só nome/e-mail/role do convite válido; `POST /api/convites/:token/aceitar` cria a conta
-- [ ] Auditoria no servidor para toda escrita (EPI, movimentação, usuário, convite, login), com IP real do request (#7)
-- [ ] `relatorios`: `POST` (admin/operador) — **o servidor** calcula e grava o retrato a partir do banco; `GET` lista e `GET /:id` detalha (todos os perfis)
-- [ ] `logs` (admin): listar com filtro por usuário/ação/período no banco (hoje o filtro é no cliente sobre 1000 registros)
+- [x] `GET /api/opcoes`: categorias, tamanhos por categoria, unidades, departamentos, motivos por tipo e funções — **fonte única** em [api/src/dominio.js](../api/src/dominio.js); o frontend deixa de repetir essas listas
+- [x] `epis`: listar (`?status=ativos|inativos|todos`, padrão ativos), detalhar, criar, editar; `PATCH /api/epis/:id/ativo` só admin. **Sem rota de exclusão** (#10)
+  - Cadastro com `quantidadeInicial` gera automaticamente uma entrada "Estoque inicial (cadastro do EPI)" — todo saldo tem explicação no histórico
+  - Edição **não** altera a quantidade (campo ignorado): estoque só muda por movimentação (#11)
+  - Tamanho validado contra a categoria
+- [x] `movimentacoes`: listar paginado com filtros (`epiId`, `tipo`, `busca`, `de`/`ate` no horário de Brasília); **criar em transação com `SELECT ... FOR UPDATE`** — saldo calculado no servidor; saída maior que o estoque → 409 (#1); EPI desativado → 409. **Sem edição/exclusão**
+  - Motivo validado contra o tipo; "Outros" exige descrição; "Entrega para funcionário" exige quem recebeu (registro de entrega de EPI); quem recebeu só é gravado em saídas
+- [x] `usuarios` (admin): listar, editar (nome, departamento, telefone, função), ativar/desativar. **Sem exclusão e sem "criar" direto** (#5). Admin não desativa a si mesmo nem muda a própria função — com isso o sistema nunca fica sem admin ativo. Desativar incrementa `sessaoVersao` (reativar não ressuscita tokens antigos)
+- [x] `convites` (admin): criar (token de 256 bits, só o hash no banco, validade 7 dias, e-mail pelo servidor — #6, #8), listar com status, revogar. Convite novo para o mesmo e-mail revoga o pendente. Se o e-mail falhar, o convite vale e a resposta traz o link (para QR Code)
+- [x] `convites` (público): `GET /api/convites/aceitar/:token` (só nome/e-mail/departamento/função); `POST /api/convites/aceitar/:token` cria a conta de forma atômica e **já entra logado**
+- [x] Auditoria no servidor para toda escrita, **na mesma transação** da operação, com IP real; edições guardam só os campos alterados (antes → depois) (#7)
+- [x] `logs` (admin): paginado, filtros por usuário, ação, entidade, período — no banco (#7)
+- [ ] ~~`relatorios` salvos~~ → **adiado para depois do go-live** (ver "Ordem de execução")
+- [x] Teste de ponta a ponta versionado: [api/scripts/teste-api.mjs](../api/scripts/teste-api.mjs) (`npm run test:api` com a API no ar) — **52 cenários passando**, incluindo 20 movimentações simultâneas no mesmo EPI
+
+**Notas técnicas da Fase 4**
+
+- Respostas de movimentação trazem `epiDescricao` e `data`, os mesmos nomes que as telas já usam (menos retrabalho na Fase 5). `dataValidade` sai como `AAAA-MM-DD` (evita o "dia anterior" no fuso UTC-3); `valorUnitario` sai como número.
+- Busca ignora maiúsculas mas **não** acentos ("joao" não acha "João"). Melhoria futura: extensão `unaccent` do Postgres.
+- `porPagina` aceita até 5000: no go-live os relatórios continuam calculados no navegador a partir da lista de movimentações do período.
+- O `teste-api.mjs` cria dados de teste: só em desenvolvimento (recusa `NODE_ENV=production`).
 
 ## Fase 5 — Frontend
 

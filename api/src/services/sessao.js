@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { config } from "../config.js";
 import { PERMISSOES } from "../permissoes.js";
+import { formatarUsuario } from "./formatar.js";
 
 export const COOKIE_SESSAO = "epi_sessao";
 const DURACAO_HORAS = 8;
@@ -36,16 +37,5 @@ export function lerSessao(token) {
 }
 
 export function perfilPublico(usuario) {
-  return {
-    usuario: {
-      id: usuario.id,
-      nome: usuario.nome,
-      email: usuario.email,
-      departamento: usuario.departamento,
-      telefone: usuario.telefone,
-      role: usuario.role,
-      ultimoAcesso: usuario.ultimoAcesso,
-    },
-    permissoes: PERMISSOES[usuario.role],
-  };
+  return { usuario: formatarUsuario(usuario), permissoes: PERMISSOES[usuario.role] };
 }

@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import { Router } from "express";
-import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { ErroHttp } from "../middlewares/erros.js";
 import { autenticar } from "../middlewares/autenticar.js";
+import { limitarChamadas, limitarFalhas } from "../middlewares/limites.js";
 import { registrarLog } from "../services/auditoria.js";
 import { enviarEmailRedefinicaoSenha } from "../services/email.js";
 import { encerrarSessao, iniciarSessao, perfilPublico } from "../services/sessao.js";
@@ -23,30 +23,11 @@ export const esquemaSenha = z
   .min(8, "A senha precisa ter pelo menos 8 caracteres")
   .max(72, "A senha pode ter no máximo 72 caracteres"); // limite do bcrypt
 
-const esquemaEmail = z.email("E-mail inválido").trim().toLowerCase();
-
-// Só respostas de erro contam: se muitos usuários chegarem pelo mesmo IP (proxy da rede),
-// logins bem-sucedidos não esgotam o limite de ninguém.
-const limitarFalhas = (limit) =>
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit,
-    skipSuccessfulRequests: true,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: { erro: "Muitas tentativas. Aguarde 15 minutos e tente novamente." },
-  });
+export const esquemaEmail = z.email("E-mail inválido").trim().toLowerCase();
 
 const limiteLogin = limitarFalhas(10);
 const limiteRedefinicao = limitarFalhas(10);
-// Cada pedido dispara um e-mail, então aqui contam todos.
-const limiteEsqueciSenha = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: { erro: "Muitas solicitações. Aguarde 15 minutos e tente novamente." },
-});
+const limiteEsqueciSenha = limitarChamadas(5); // cada pedido dispara um e-mail
 
 export const authRouter = Router();
 

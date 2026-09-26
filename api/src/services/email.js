@@ -1,4 +1,5 @@
 import { config } from "../config.js";
+import { ROLES } from "../dominio.js";
 
 const URL_EMAILJS = "https://api.emailjs.com/api/v1.0/email/send";
 
@@ -27,6 +28,17 @@ async function enviar(templateId, destinatario, parametros) {
   if (!resposta.ok) {
     throw new Error(`EmailJS respondeu ${resposta.status}: ${await resposta.text()}`);
   }
+}
+
+// Mesmos parâmetros do template que o frontend antigo usava.
+export function enviarEmailConvite({ nome, email, departamento, role, link }) {
+  return enviar(config.EMAILJS_TEMPLATE_CONVITE, email, {
+    nome,
+    email,
+    departamento,
+    role: ROLES[role],
+    convite_url: link,
+  });
 }
 
 export function enviarEmailRedefinicaoSenha({ nome, email, link }) {
