@@ -220,7 +220,7 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 - [x] Login com "Solicitar acesso" (`mailto:` do `.env`) no lugar de "Cadastre-se" (#9); "Esqueci minha senha" e nova tela `/redefinir-senha/:token`; "Alterar senha" no cabeçalho
 - [x] Convite: e-mail enviado pela API na criação; tela final com QR Code, link (exibido uma única vez) e aviso se o e-mail falhou
 - [x] Página "Sobre" e `.env.example` sem Firebase
-- [ ] Remover `firebase`, `@emailjs/browser`, `fs` e `path` do [package.json](../package.json) — **aguardando**: o `package.json` da raiz tem atualizações de dependências do Wagner ainda não commitadas
+- [x] Limpeza de dependências: removidos `firebase`, `@emailjs/browser`, `fs`, `path`, `postcss`, `autoprefixer`, `postcss.config.js` e `App.css` (vazio); `xlsx` trocado pelo build oficial do SheetJS 0.20.3 (**`npm audit`: 0 vulnerabilidades**); plugins do ESLint atualizados para o ESLint 10, o que permitiu apagar o `.npmrc` com `legacy-peer-deps` (conflitos de dependências não ficam mais escondidos); scripts de instalação: só `esbuild` liberado
 - [ ] ~~Relatórios salvos~~ → depois do go-live
 - [ ] README → reescrito na Fase 6 (junto com as instruções de Docker)
 
@@ -289,13 +289,13 @@ O sistema original tinha os problemas típicos de um primeiro projeto com Fireba
 
 | Prioridade | Item | Por quê |
 |---|---|---|
-| Alta | Trocar `xlsx` 0.18.5 (abandonado no npm, 2 falhas "high") pelo build oficial do SheetJS (`cdn.sheetjs.com`) ou por `exceljs` | As falhas são na *leitura* de planilhas e o sistema só *gera* — risco real baixo, mas o pacote não recebe mais correções |
 | Alta | CI rodando lint + `test:api` + `test:ui` a cada push | Os testes existem; falta rodarem sozinhos |
 | Alta | LGPD: definir retenção dos logs (guardam IP e e-mail) e um aviso de privacidade; nome de quem recebe EPI é dado pessoal (base legal: obrigação da NR-6) | Governança de dados pessoais |
 | Média | **Rotas de verdade** (`react-router`, já instalado): hoje a tela é um `useState`, então F5 volta ao Dashboard e não dá para mandar link de uma tela | Usabilidade e base para crescer |
 | Média | Quebrar [Relatorios.jsx](../src/components/pages/Relatorios.jsx) (~1000 linhas) em um componente por relatório — junto com a funcionalidade de relatórios salvos | Manutenção |
 | Média | Filtros de Movimentações/Relatórios na API (ela já suporta) em vez de baixar as 2000 mais recentes | Escala |
 | Média | Carregar jsPDF/xlsx/recharts só quando usados (`import()`): o bundle tem 1,5 MB | Tempo de carregamento em rede lenta |
+| Média | Refatorar os 8 avisos `react-hooks/set-state-in-effect` (hooks de busca e formulários que se preenchem ao abrir): montar modais com estado inicial pronto (como já feito no de movimentação) e/ou adotar uma biblioteca de busca de dados (TanStack Query) | Renders extras; a regra está como aviso no [eslint.config.js](../eslint.config.js) |
 | Baixa | Trocar `alert`/`confirm` do navegador por avisos e modais do próprio sistema | Consistência visual |
 | Baixa | Busca sem acento (`unaccent` no Postgres) | "joao" não acha "João" |
 | Baixa | Tempo de inatividade na sessão (hoje: 8 h fixas) | Computador compartilhado esquecido logado |

@@ -132,6 +132,16 @@ await page.locator(".fixed").last().getByRole("button").last().click().catch(() 
 // Relatórios: admin vê exportação
 await page.locator("nav").getByText("Relatórios").click();
 checar("relatórios: admin vê 'Exportar PDF'", await page.getByRole("button", { name: "Exportar PDF" }).first().isVisible());
+for (const [botao, extensao] of [["Exportar Excel", ".xlsx"], ["Exportar PDF", ".pdf"]]) {
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: botao }).first().click(),
+  ]);
+  const caminho = `${SHOTS}${download.suggestedFilename()}`;
+  await download.saveAs(caminho);
+  const { size } = await import("node:fs").then((fs) => fs.statSync(caminho));
+  checar(`relatórios: "${botao}" baixa ${extensao} (${size} bytes)`, download.suggestedFilename().endsWith(extensao) && size > 1000);
+}
 
 // Convite
 await page.locator("nav").getByText("Usuários").click();
