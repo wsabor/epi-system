@@ -40,6 +40,7 @@ model Usuario {
   telefone     String?
   role         Role      @default(visualizador)
   ativo        Boolean   @default(true)
+  sessaoVersao Int       @default(0) @map("sessao_versao") // incrementar derruba todas as sessões abertas do usuário
   criadoEm     DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
   ultimoAcesso DateTime? @map("ultimo_acesso") @db.Timestamptz(3)
 

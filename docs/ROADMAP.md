@@ -159,12 +159,26 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 
 ## Fase 3 — Autenticação e autorização na API
 
-- [ ] `POST /api/auth/login` — rejeita usuário inativo (#3); atualiza `ultimoAcesso`; limite de tentativas por IP; senha mínima de **8** caracteres (hoje são 6)
-- [ ] `POST /api/auth/logout`, `GET /api/auth/me` (retorna perfil **e** permissões)
-- [ ] `POST /api/auth/esqueci-senha` → token aleatório (`crypto.randomBytes`), salvo só como hash, e-mail via EmailJS
-- [ ] `POST /api/auth/redefinir-senha`
-- [ ] Middleware `autenticar` (lê o cookie, carrega o usuário do banco a cada request: usuário desativado ou excluído perde o acesso na hora — #3, #4)
-- [ ] Middleware `permitir("criarEPI")` lendo **uma única** matriz de permissões (Fase 0) no servidor (#2)
+- [x] `POST /api/auth/login` — e-mail sem diferenciar maiúsculas; rejeita usuário inativo (403, #3); atualiza `ultimoAcesso`; mesma mensagem para e-mail inexistente e senha errada (e mesmo tempo de resposta)
+- [x] `POST /api/auth/logout`, `GET /api/auth/me` (perfil **e** lista de permissões)
+- [x] `POST /api/auth/alterar-senha` (logado; derruba as outras sessões e renova o cookie desta)
+- [x] `POST /api/auth/esqueci-senha` → token de 256 bits, banco guarda só o hash, validade 1 h, pedido novo invalida links anteriores; resposta idêntica exista ou não o e-mail
+- [x] `POST /api/auth/redefinir-senha` → link de uso único (atômico, mesmo com pedidos simultâneos); derruba todas as sessões
+- [x] Sessão: JWT HS256 em cookie `epi_sessao` (`HttpOnly`, `SameSite=Strict`, `Path=/api`, 8 h; `Secure` via `COOKIE_SECURE`)
+- [x] Middleware `autenticar`: recarrega o usuário do banco a cada request; inativo ou `sessaoVersao` diferente → 401 na hora (#3, #4)
+- [x] Middleware `permitir("epis:ativar")` lendo **uma única** matriz em [api/src/permissoes.js](../api/src/permissoes.js) (#2)
+- [x] Limite por IP: login e redefinição contam **só falhas** (10 / 15 min — proxy compartilhado não trava quem acerta a senha); esqueci-senha conta tudo (5 / 15 min)
+- [x] Auditoria de `LOGIN`, `LOGIN_FALHA`, `LOGIN_BLOQUEADO_INATIVO`, `SENHA_ALTERAR`, `SENHA_REDEFINICAO_SOLICITAR`, `SENHA_REDEFINIR`, com IP
+- [x] [api/src/config.js](../api/src/config.js) valida o `.env` na partida e diz o que falta; em produção (`NODE_ENV=production`) exige o EmailJS
+- [x] Senha: mínimo 8, máximo 72 caracteres (limite do bcrypt)
+- [x] Testado de ponta a ponta com `curl`: 22 cenários (sessão, troca e redefinição de senha, reuso de link, usuário desativado, logout) + limite de tentativas + 14 casos da matriz de permissões
+
+**Notas técnicas da Fase 3**
+
+- Campo novo `usuarios.sessao_versao` (migration própria): vai no token; incrementar derruba todas as sessões do usuário. Usado em troca/redefinição de senha — e será usado ao desativar usuário e mudar role (Fase 4).
+- `trust proxy = 1`: a API confia em exatamente um proxy (nginx em produção, Vite em dev). A porta da API **não pode** ficar exposta direto na rede, senão o cliente forja o IP pelo `X-Forwarded-For` (Fase 6 já prevê isso).
+- Sem EmailJS configurado (dev), o e-mail sai no console da API com o link — dá para testar a redefinição sem enviar nada.
+- Banco local de desenvolvimento passou a ser `epi_dev` (o antigo `epi_system` do container ficou com a migration descartada; pode ser apagado com `docker compose -f docker-compose.dev.yml exec db dropdb -U epi epi_system`). Quem clonar do zero usa o nome do `.env.example` normalmente.
 
 ## Fase 4 — Rotas de domínio
 
