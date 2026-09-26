@@ -32,3 +32,9 @@ CHECKLIST.md
 RELEASE.md
 TESTES.md
 firestore-rules-debug.txt
+
+# Variáveis de ambiente (versionar só o .env.example)
+.env
+
+# Prisma Client gerado
+api/src/generated/

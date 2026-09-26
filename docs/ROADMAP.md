@@ -64,7 +64,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 
 ## Fase 0 — Preparação e decisões pendentes
 
-- [ ] Criar a branch `refactor/api-postgres`
+- [x] Criar a branch `refactor/api-postgres` (a `main` fica intacta como backup até o corte)
 - [ ] Levantar volume de dados por coleção no Firestore (`epis`, `movimentacoes`, `usuarios`, `logs`, `convites`)
 - [x] Matriz de permissões (fonte única da verdade, aplicada na API):
 
@@ -97,12 +97,33 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 
 ## Fase 1 — Esqueleto da API e ambiente de desenvolvimento
 
-- [ ] `api/` com Express 5, Zod, Prisma, bcrypt, `jsonwebtoken`, `cookie-parser`, `helmet`
-- [ ] `docker-compose.dev.yml` só com o PostgreSQL (API e Vite rodam na máquina com hot reload)
-- [ ] Proxy `/api` no [vite.config.js](../vite.config.js) para o dev
-- [ ] **Um único `.env` na raiz** (+ `.env.example` versionado): o Vite lê direto; a API carrega com `node --env-file=../.env`; o `docker-compose` usa o mesmo arquivo. Variáveis do front têm prefixo `VITE_`, segredos da API nunca têm
-- [ ] `.env.example` com `VITE_EMAIL_SOLICITAR_ACESSO=solicitar-acesso@exemplo.com` como placeholder
-- [ ] Rota `GET /api/health` respondendo `{ status: "ok" }` e checando conexão com o banco
+- [x] `api/` com Express 5, Zod, Prisma 7 (+ `@prisma/adapter-pg`), `cookie-parser`, `helmet` — bcrypt e `jsonwebtoken` entram na Fase 3
+- [x] `docker-compose.dev.yml` só com o PostgreSQL 18 (API e Vite rodam na máquina com hot reload)
+- [x] Proxy `/api` no [vite.config.js](../vite.config.js) para o dev (porta lida do `.env`)
+- [x] **Um único `.env` na raiz** (+ [.env.example](../.env.example) versionado): o Vite lê direto; a API carrega com `node --env-file=../.env`; o Prisma CLI carrega em [api/prisma.config.js](../api/prisma.config.js); o `docker-compose` usa o mesmo arquivo
+- [x] `.env.example` com `VITE_EMAIL_SOLICITAR_ACESSO=solicitar-acesso@exemplo.com` como placeholder
+- [x] Rota `GET /api/health`: `200 {status:"ok",banco:"ok"}`, ou `503` se o banco cair (a API continua no ar e se recupera sozinha)
+- [x] Encerramento limpo em `SIGTERM` (necessário para o `docker stop`)
+- [x] ESLint da raiz com bloco Node para `api/` e `vite.config.js`
+
+**Notas técnicas da Fase 1**
+
+- **Node 24 é obrigatório** (inclusive na imagem Docker da Fase 6): o Prisma 7 gera o client em `.ts` e o Node 24 executa TypeScript nativamente, sem etapa de build.
+- O pacote `prisma` no npm está com a tag `latest` apontando para uma *release candidate* (8.0.0-rc). Fixamos em `^7.10.0`; ao atualizar, conferir a versão.
+- `npm audit` acusa 4 alertas "high", todos dentro do **CLI** do Prisma (`mysql2`, que não usamos, e `deepmerge-ts`, que só lê nosso próprio config). Nada disso roda em produção. A correção sugerida pelo npm rebaixa para o Prisma 6: **não aplicar**. Reavaliar a cada atualização do Prisma.
+- O npm 11 bloqueia scripts de instalação: os do Prisma estão liberados em `allowScripts` no [api/package.json](../api/package.json), presos à versão exata. Ao atualizar o Prisma, rodar `npm approve-scripts prisma @prisma/engines` de novo.
+- Lint do frontend tem 14 problemas **anteriores** à migração (em `src/`); somem com a reescrita da Fase 5.
+
+**Como rodar em desenvolvimento**
+
+```bash
+cp .env.example .env                                  # só na primeira vez
+docker compose -f docker-compose.dev.yml up -d --wait # banco
+cd api && npm install && npm run dev                  # API em http://localhost:3000 (terminal 1)
+npm run dev                                           # frontend em http://localhost:5173 (terminal 2, na raiz)
+```
+
+Teste: `curl localhost:5173/api/health` → `{"status":"ok","banco":"ok"}`
 
 ## Fase 2 — Modelo de dados (Prisma)
 
@@ -154,7 +175,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 
 ## Fase 6 — Dockerização
 
-- [ ] `api/Dockerfile` (Node LTS slim, usuário não-root, `prisma migrate deploy` antes de subir)
+- [ ] `api/Dockerfile` (**Node 24** slim, usuário não-root, `prisma generate` no build, `prisma migrate deploy` antes de subir)
 - [ ] `Dockerfile` do frontend: build do Vite → nginx com fallback de SPA (substitui o `rewrites` do [vercel.json](../vercel.json)) e proxy `/api`. Variáveis `VITE_*` entram como *build args* vindos do `.env` da raiz — mudar o e-mail de solicitação exige `docker compose build web`
 - [ ] `docker-compose.yml`: `web`, `api`, `db`; volume nomeado para o Postgres; healthchecks; `restart: unless-stopped`; porta do banco **não** exposta
 - [ ] `docker compose up` do zero numa máquina limpa sobe tudo e o admin do seed consegue logar
