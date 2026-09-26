@@ -35,6 +35,8 @@ firestore-rules-debug.txt
 
 # Variáveis de ambiente (versionar só o .env.example)
 .env
+.env.*
+!.env.example
 
 # Prisma Client gerado
 api/src/generated/
