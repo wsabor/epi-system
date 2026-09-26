@@ -6,3 +6,165 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Convenção: modelos e campos em camelCase no código; tabelas e colunas em snake_case no banco,
+// para consultas SQL diretas ficarem legíveis sem aspas.
+// Nenhuma relação apaga em cascata: histórico nunca some (EPIs e usuários são inativados).
+
+enum Role {
+  admin
+  operador
+  visualizador
+}
+
+enum TipoMovimentacao {
+  entrada
+  saida
+  ajuste
+  perda
+}
+
+enum TipoRelatorio {
+  estoque
+  movimentacoes
+  vencimentos
+  dashboard
+}
+
+model Usuario {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  nome         String
+  email        String    @unique // sempre gravado em minúsculas pela API
+  senhaHash    String    @map("senha_hash")
+  departamento String
+  telefone     String?
+  role         Role      @default(visualizador)
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+  ultimoAcesso DateTime? @map("ultimo_acesso") @db.Timestamptz(3)
+
+  movimentacoes     Movimentacao[]
+  convitesCriados   Convite[]               @relation("ConviteCriadoPor")
+  conviteAceito     Convite?                @relation("ConviteAceitoPor")
+  tokensRedefinicao TokenRedefinicaoSenha[]
+  logs              Log[]
+  relatoriosGerados Relatorio[]
+
+  @@map("usuarios")
+}
+
+model Epi {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  descricao           String
+  categoria           String
+  tamanho             String
+  tipoEstoque         String   @map("tipo_estoque") // unidade: Peça, Par, Kit, Metro, Litro
+  marca               String
+  numeroCA            String   @map("numero_ca")
+  dataValidade        DateTime @map("data_validade") @db.Date
+  valorUnitario       Decimal  @map("valor_unitario") @db.Decimal(10, 2)
+  fornecedor          String
+  quantidadeAtual     Int      @default(0) @map("quantidade_atual")
+  estoqueMinimo       Int      @map("estoque_minimo")
+  diasAvisoVencimento Int      @map("dias_aviso_vencimento")
+  ativo               Boolean  @default(true)
+  criadoEm            DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+  atualizadoEm        DateTime @updatedAt @map("atualizado_em") @db.Timestamptz(3)
+
+  movimentacoes Movimentacao[]
+
+  @@index([ativo, descricao])
+  @@map("epis")
+}
+
+// Imutável: não há update nem delete. Erro se corrige com uma nova movimentação de ajuste.
+model Movimentacao {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  epiId              String           @map("epi_id") @db.Uuid
+  tipo               TipoMovimentacao
+  quantidade         Int // no ajuste é a quantidade contada (novo saldo)
+  quantidadeAnterior Int              @map("quantidade_anterior")
+  quantidadeNova     Int              @map("quantidade_nova")
+  responsavel        String
+  funcionarioRecebeu String?          @map("funcionario_recebeu") // só em saída
+  motivo             String
+  observacoes        String?
+  usuarioId          String           @map("usuario_id") @db.Uuid
+  criadoEm           DateTime         @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  epi     Epi     @relation(fields: [epiId], references: [id], onDelete: Restrict)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([criadoEm(sort: Desc)])
+  @@index([epiId, criadoEm(sort: Desc)])
+  @@map("movimentacoes")
+}
+
+model Convite {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  tokenHash    String    @unique @map("token_hash") // o token em si só existe no link enviado
+  nome         String
+  email        String
+  departamento String
+  telefone     String?
+  role         Role
+  expiraEm     DateTime  @map("expira_em") @db.Timestamptz(3)
+  usadoEm      DateTime? @map("usado_em") @db.Timestamptz(3)
+  revogadoEm   DateTime? @map("revogado_em") @db.Timestamptz(3)
+  criadoPorId  String    @map("criado_por_id") @db.Uuid
+  usuarioId    String?   @unique @map("usuario_id") @db.Uuid // conta criada ao aceitar
+  criadoEm     DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  criadoPor Usuario  @relation("ConviteCriadoPor", fields: [criadoPorId], references: [id], onDelete: Restrict)
+  usuario   Usuario? @relation("ConviteAceitoPor", fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([email])
+  @@map("convites")
+}
+
+model TokenRedefinicaoSenha {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  usuarioId String    @map("usuario_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiraEm  DateTime  @map("expira_em") @db.Timestamptz(3)
+  usadoEm   DateTime? @map("usado_em") @db.Timestamptz(3)
+  criadoEm  DateTime  @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@map("tokens_redefinicao_senha")
+}
+
+// Auditoria: gravada só pela API, nunca pelo navegador.
+model Log {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  usuarioId  String?  @map("usuario_id") @db.Uuid // nulo = ação sem usuário identificado (ex.: login com e-mail inexistente)
+  acao       String // ex.: EPI_CRIAR, MOVIMENTACAO_CRIAR, USUARIO_DESATIVAR, LOGIN_FALHA
+  entidade   String?
+  entidadeId String?  @map("entidade_id")
+  detalhes   Json?
+  ip         String?
+  criadoEm   DateTime @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([criadoEm(sort: Desc)])
+  @@index([usuarioId, criadoEm(sort: Desc)])
+  @@index([entidade, entidadeId])
+  @@map("logs")
+}
+
+// Retrato do relatório no momento da geração: não muda se o estoque mudar depois.
+model Relatorio {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  tipo        TipoRelatorio
+  filtros     Json
+  dados       Json
+  geradoPorId String        @map("gerado_por_id") @db.Uuid
+  criadoEm    DateTime      @default(now()) @map("criado_em") @db.Timestamptz(3)
+
+  geradoPor Usuario @relation(fields: [geradoPorId], references: [id], onDelete: Restrict)
+
+  @@index([criadoEm(sort: Desc)])
+  @@map("relatorios")
+}

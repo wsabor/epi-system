@@ -16,6 +16,7 @@
 | Configuração | **Um único `.env` na raiz** alimenta Vite (dev), API e `docker-compose` |
 | Deploy | VM Linux (Ubuntu Server/Debian) com Docker no **Proxmox do SENAI**, administrada pelo Wagner (acesso só presencial no SENAI) |
 | Google OAuth | Removido (código morto hoje) |
+| Dados | **Sistema novo.** O Firebase só tem dados de teste: nada é migrado e não há compatibilidade com legado a manter. Go-live: **28/09/2026** |
 
 ## Arquitetura alvo
 
@@ -58,7 +59,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 | 7 | Auditoria gravada pelo cliente, só cobre gestão de usuários, IP fixo `192.168.1.100` | [useLogs.js:61](../src/hooks/useLogs.js#L61) | 4 |
 | 8 | Credenciais do EmailJS no código do frontend | [emailService.js](../src/services/emailService.js) | 4 |
 | 9 | Cadastro aberto para qualquer um que acesse a URL | [Register.jsx](../src/components/auth/Register.jsx) | 5 |
-| 10 | EPI é excluído de verdade, deixando movimentações apontando para um EPI que não existe mais | [epiServices.js:107-115](../src/services/epiServices.js#L107-L115) | 2, 4, 7 |
+| 10 | EPI é excluído de verdade, deixando movimentações apontando para um EPI que não existe mais | [epiServices.js:107-115](../src/services/epiServices.js#L107-L115) | 2, 4 |
 
 ---
 
@@ -97,7 +98,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 
 ## Fase 1 — Esqueleto da API e ambiente de desenvolvimento
 
-- [x] `api/` com Express 5, Zod, Prisma 7 (+ `@prisma/adapter-pg`), `cookie-parser`, `helmet` — bcrypt e `jsonwebtoken` entram na Fase 3
+- [x] `api/` com Express 5, Zod, Prisma 7 (+ `@prisma/adapter-pg`), `cookie-parser`, `helmet` — `bcryptjs` entrou na Fase 2 (seed), `jsonwebtoken` entra na Fase 3
 - [x] `docker-compose.dev.yml` só com o PostgreSQL 18 (API e Vite rodam na máquina com hot reload)
 - [x] Proxy `/api` no [vite.config.js](../vite.config.js) para o dev (porta lida do `.env`)
 - [x] **Um único `.env` na raiz** (+ [.env.example](../.env.example) versionado): o Vite lê direto; a API carrega com `node --env-file=../.env`; o Prisma CLI carrega em [api/prisma.config.js](../api/prisma.config.js); o `docker-compose` usa o mesmo arquivo
@@ -119,7 +120,9 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 ```bash
 cp .env.example .env                                  # só na primeira vez
 docker compose -f docker-compose.dev.yml up -d --wait # banco
-cd api && npm install && npm run dev                  # API em http://localhost:3000 (terminal 1)
+cd api && npm install                                 # também gera o Prisma Client
+npm run db:migrate && npm run db:seed                 # tabelas + admin inicial
+npm run dev                                           # API em http://localhost:3000 (terminal 1)
 npm run dev                                           # frontend em http://localhost:5173 (terminal 2, na raiz)
 ```
 
@@ -127,19 +130,36 @@ Teste: `curl localhost:5173/api/health` → `{"status":"ok","banco":"ok"}`
 
 ## Fase 2 — Modelo de dados (Prisma)
 
-- [ ] `Usuario`: id, nome, email (único), senhaHash, departamento, telefone, role (enum), ativo, criadoEm, ultimoAcesso
-- [ ] `Epi`: id, descricao, marca, tamanho, ca, quantidadeAtual, estoqueMinimo, dataValidade, diasAvisoVencimento, valor/custo (`Decimal`), fornecedor, **ativo**, criadoEm, atualizadoEm — conferir campos reais em [EPIModal.jsx](../src/components/modals/EPIModal.jsx)
-- [ ] `Movimentacao`: id, epiId → Epi, tipo (enum entrada/saida/perda/ajuste), quantidade, quantidadeAnterior, quantidadeNova, responsavel, funcionarioRecebeu, motivo, observacoes, usuarioId → Usuario, criadoEm
-- [ ] `Convite`: id, tokenHash (único), nome, email, departamento, telefone, role, expiraEm, usadoEm, criadoPorId, usuarioId
-- [ ] `TokenRedefinicaoSenha`: id, usuarioId, tokenHash, expiraEm, usadoEm
-- [ ] `Log`: id, usuarioId, acao, entidade, entidadeId, detalhes (`Json`), ip, criadoEm
-- [ ] `Relatorio`: id, tipo (enum estoque/movimentacoes/vencimentos/dashboard), filtros (`Json`: período, categoria), dados (`Json`: retrato dos números no momento da geração), geradoPorId, criadoEm — relatório salvo não muda mesmo que o estoque mude depois
-- [ ] Primeira migration (`prisma migrate dev`) + seed com um admin inicial
-- [ ] Todas as FKs com `onDelete: Restrict`: o banco recusa apagar EPI ou usuário que tenha histórico, mesmo que alguém tente por fora da API (#10)
+Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7 (ordenados por tempo), datas `timestamptz`, dinheiro `Decimal(10,2)`, tabelas e colunas em `snake_case` no banco.
+
+- [x] `Usuario` (`usuarios`): nome, email (único), senhaHash (obrigatório), departamento, telefone, role, ativo, criadoEm, ultimoAcesso
+- [x] `Epi` (`epis`) com os campos **reais** do [EPIModal.jsx](../src/components/modals/EPIModal.jsx): descricao, categoria, tamanho, tipoEstoque (unidade), marca, numeroCA, dataValidade (`date`), valorUnitario, fornecedor, quantidadeAtual, estoqueMinimo, diasAvisoVencimento, **ativo**
+- [x] `Movimentacao` (`movimentacoes`): epi, tipo, quantidade, quantidadeAnterior, **quantidadeNova**, responsavel, funcionarioRecebeu (só saída), motivo, observacoes, usuario (quem registrou). O campo duplicado `epiDescricao` do Firestore **não** foi mantido: vem pela relação
+- [x] `Convite` (`convites`): tokenHash, dados do convidado, role, expiraEm, usadoEm, **revogadoEm**, criadoPor, usuario (conta criada)
+- [x] `TokenRedefinicaoSenha` (`tokens_redefinicao_senha`)
+- [x] `Log` (`logs`): usuario (opcional), acao, entidade, entidadeId, detalhes (`Json`), ip
+- [x] `Relatorio` (`relatorios`): tipo, filtros (`Json`), dados (`Json`, retrato congelado), geradoPor
+- [x] Migration `inicial` aplicada; seed (`npm run db:seed`) cria o primeiro admin a partir do `.env` **só se não houver nenhum admin** — pode rodar quantas vezes quiser
+- [x] Todas as FKs com `ON DELETE RESTRICT` (#10)
+- [x] Regras escritas à mão no fim da migration (o Prisma não as expressa, mas também não tenta desfazê-las — verificado):
+  - `CHECK` de não-negativos em estoque, estoque mínimo, dias de aviso, valor e quantidades
+  - `CHECK` de quantidade > 0, exceto no ajuste (que pode zerar o saldo)
+  - `CHECK` de **saldo coerente**: `quantidadeNova` = anterior + quantidade (entrada), anterior − quantidade (saída/perda) ou quantidade (ajuste). Com o não-negativo, saída maior que o estoque é recusada pelo próprio banco
+  - `CHECK` de "funcionário que recebeu" só em saída
+  - `CHECK` de e-mail sempre em minúsculas
+  - **Triggers** que recusam `UPDATE`/`DELETE` em `movimentacoes` e `logs` — histórico imutável mesmo via SQL direto
+- [x] Testado com SQL puro (fora da API): todas as operações proibidas foram recusadas (apagar com histórico, alterar movimentação/log, estoque negativo, e-mail com maiúscula, usuário sem senha, saldo incoerente, saída maior que o estoque) e as válidas aceitas (entrada, ajuste, ajuste para zero)
+
+**Notas técnicas da Fase 2**
+
+- Categorias, unidades (`tipoEstoque`), departamentos e motivos continuam como **texto**, validados pela API (Fase 4) contra listas no código. Transformar em tabelas administráveis fica para depois, se necessário.
+- `bcryptjs` (JavaScript puro) em vez de `bcrypt` (nativo): sem compilação na imagem Docker e sem liberar scripts de instalação. Custo 12.
+- O `migrate dev` do Prisma 7 já regenera o client; o seed **não** roda sozinho (`npm run db:seed`).
+- Para uma correção excepcional em movimentação/log, um DBA precisa desligar o trigger explicitamente (`ALTER TABLE ... DISABLE TRIGGER ...`) — fica visível e deliberado.
 
 ## Fase 3 — Autenticação e autorização na API
 
-- [ ] `POST /api/auth/login` — rejeita usuário inativo (#3); atualiza `ultimoAcesso`; limite de tentativas por IP
+- [ ] `POST /api/auth/login` — rejeita usuário inativo (#3); atualiza `ultimoAcesso`; limite de tentativas por IP; senha mínima de **8** caracteres (hoje são 6)
 - [ ] `POST /api/auth/logout`, `GET /api/auth/me` (retorna perfil **e** permissões)
 - [ ] `POST /api/auth/esqueci-senha` → token aleatório (`crypto.randomBytes`), salvo só como hash, e-mail via EmailJS
 - [ ] `POST /api/auth/redefinir-senha`
@@ -181,26 +201,22 @@ Teste: `curl localhost:5173/api/health` → `{"status":"ok","banco":"ok"}`
 - [ ] `docker compose up` do zero numa máquina limpa sobe tudo e o admin do seed consegue logar
 - [ ] Remover [vercel.json](../vercel.json)
 
-## Fase 7 — Migração dos dados do Firestore
+## ~~Fase 7 — Migração dos dados do Firestore~~ (removida)
 
-- [ ] Script `api/scripts/exportar-firestore.js` (Firebase Admin SDK) → JSON por coleção
-- [ ] Script `api/scripts/importar.js`: IDs novos com tabela de mapeamento id antigo → novo (para `epiId`, `userId` nas movimentações); `Timestamp` → `DateTime`
-- [ ] Movimentações órfãs (EPI já excluído no Firebase, #10): criar o EPI como **inativo** a partir do `epiDescricao` gravado na movimentação, preservando o histórico
-- [ ] Usuários importados **sem senha**: após o corte, cada um recebe e-mail de redefinição (hash do Firebase não é portável)
-- [ ] Convites pendentes não migram — reemitir os que ainda interessarem
-- [ ] Ensaiar em ambiente de teste e conferir contagens e o estoque de alguns EPIs contra o Firebase
+O sistema nunca foi para produção: o que existe no Firebase são dados de exemplo/teste. **Nada é migrado** — o sistema novo começa vazio, com o admin do seed.
 
-## Fase 8 — Deploy no Proxmox e corte
+## Fase 8 — Deploy no Proxmox (go-live)
 
-- [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção (segredos novos, não os de dev)
+- [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção (segredos novos, gerados na hora, não os de dev)
+- [ ] Rodar o seed de produção e trocar a senha do admin inicial no primeiro login
 - [ ] HTTPS conforme verificado na Fase 0 (proxy da borda ou Caddy na própria VM)
+- [ ] **Backup diário com `pg_dump` já no dia 1** (cron na VM) + backup da VM pelo Proxmox (`vzdump`) — governança não fica para depois
 - [ ] Testar os 3 perfis fim a fim, incluindo tentar ações proibidas direto na API (sem passar pela UI)
-- [ ] Corte: congelar uso do sistema antigo → exportar/importar final → disparar e-mails de redefinição → liberar
-- [ ] Manter o projeto Firebase em leitura por algumas semanas antes de desativá-lo
+- [ ] Cadastrar os EPIs reais e convidar os usuários
+- [ ] Desativar o projeto Firebase e o deploy da Vercel quando quiser (não há dados a preservar)
 
-## Fase 9 — Pós-migração
+## Fase 9 — Pós-go-live
 
-- [ ] Backup diário com `pg_dump` (container ou cron na VM) + backup da VM pelo Proxmox (`vzdump`)
 - [ ] Testar um restore de verdade e documentar o passo a passo
 - [ ] Testes automatizados da API (começar pela movimentação transacional e pelas permissões)
 - [ ] CI: lint + testes + build das imagens
@@ -210,4 +226,10 @@ Teste: `curl localhost:5173/api/health` → `{"status":"ok","banco":"ok"}`
 
 ## Ordem de execução
 
-Fases 0 → 5 no ambiente local, sem afetar o sistema em produção. A Fase 6 pode começar junto com a 4. As Fases 7 e 8 só depois de 1–6 validadas.
+Fases 1 → 5 no ambiente local. A Fase 6 pode começar junto com a 4. A Fase 8 só depois de 1–6 validadas localmente.
+
+**Meta de go-live: segunda-feira, 28/09/2026.** Se o prazo apertar, o que pode ficar para a semana seguinte **sem ferir as regras de permissão**:
+
+- Relatórios salvos (tabela `relatorios`): no go-live, admin/operador usam os relatórios como hoje (calculados na hora + exportação) e o visualizador **não vê a tela de Relatórios** até a funcionalidade entrar
+- Filtros avançados da auditoria (vai listando por data)
+- Restore testado e CI (Fase 9)
