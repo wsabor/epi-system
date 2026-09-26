@@ -3,14 +3,21 @@ import { ROLES } from "../dominio.js";
 
 const URL_EMAILJS = "https://api.emailjs.com/api/v1.0/email/send";
 
-const emailConfigurado = Boolean(config.EMAILJS_SERVICE_ID && config.EMAILJS_PRIVATE_KEY);
-
-// Em desenvolvimento, sem EmailJS configurado, o e-mail é só mostrado no console
-// (o config.js exige as variáveis em produção).
+// Retorna true se enviou. Em desenvolvimento, com o EmailJS vazio ou incompleto, o e-mail é só mostrado no console
+// (o config.js exige todas as variáveis em produção).
 async function enviar(templateId, destinatario, parametros) {
-  if (!emailConfigurado) {
-    console.log(`[e-mail não enviado: EmailJS não configurado] para ${destinatario}`, parametros);
-    return;
+  const faltando = Object.entries({
+    EMAILJS_SERVICE_ID: config.EMAILJS_SERVICE_ID,
+    EMAILJS_PUBLIC_KEY: config.EMAILJS_PUBLIC_KEY,
+    EMAILJS_PRIVATE_KEY: config.EMAILJS_PRIVATE_KEY,
+    template: templateId,
+  })
+    .filter(([, valor]) => !valor)
+    .map(([nome]) => nome);
+
+  if (faltando.length) {
+    console.log(`[e-mail não enviado: falta ${faltando.join(", ")}] para ${destinatario}`, parametros);
+    return false;
   }
 
   const resposta = await fetch(URL_EMAILJS, {
@@ -28,6 +35,7 @@ async function enviar(templateId, destinatario, parametros) {
   if (!resposta.ok) {
     throw new Error(`EmailJS respondeu ${resposta.status}: ${await resposta.text()}`);
   }
+  return true;
 }
 
 // Mesmos parâmetros do template que o frontend antigo usava.

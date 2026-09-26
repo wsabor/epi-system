@@ -155,7 +155,7 @@ await form.getByRole("button", { name: "Criar Convite" }).click();
 await page.getByText("Convite criado!").waitFor();
 const link = await page.locator('input[readonly]').inputValue();
 checar("convite criado com QR Code e link", (await page.locator("svg").count()) > 0 && link.includes("/aceitar-convite/"), link);
-checar("convite: mostra se o e-mail foi enviado ou se falhou", (await page.getByText(`E-mail com o convite enviado para ${emailVis}`).isVisible()) || (await page.getByText("Não foi possível enviar o e-mail").isVisible()));
+checar("convite: mostra se o e-mail foi enviado ou se falhou", (await page.getByText(`E-mail com o convite enviado para ${emailVis}`).isVisible()) || (await page.getByText("Compartilhe o link ou o QR Code").isVisible()));
 await page.screenshot({ path: `${SHOTS}05-convite-criado.png` });
 await page.getByRole("button", { name: "Concluir" }).click();
 await page.locator("tr", { hasText: emailVis }).getByText("Pendente").waitFor();

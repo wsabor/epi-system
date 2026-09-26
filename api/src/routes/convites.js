@@ -146,8 +146,8 @@ convitesRouter.post("/", async (req, res) => {
   let erroEmail = null;
   if (enviarEmail) {
     try {
-      await enviarEmailConvite({ ...dados, link });
-      emailEnviado = true;
+      emailEnviado = await enviarEmailConvite({ ...dados, link });
+      if (!emailEnviado) erroEmail = "E-mail não configurado no servidor. Compartilhe o link ou o QR Code.";
     } catch (err) {
       console.error("Falha ao enviar e-mail de convite:", err.message);
       erroEmail = "Não foi possível enviar o e-mail. Compartilhe o link ou o QR Code.";
