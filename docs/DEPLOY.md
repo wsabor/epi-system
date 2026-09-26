@@ -4,18 +4,17 @@ Roteiro para colocar o EPI System no ar numa VM Linux com Docker. Os comandos as
 
 ## 0. Antes de ir ao SENAI
 
-- [ ] **Código no GitHub:** a VM baixa o código do repositório. A branch `refactor/api-postgres` precisa estar no GitHub (push) — ou já mesclada na `main`.
-- [ ] **EmailJS** (Account → Security): ligar *Allow EmailJS API for non-browser applications* e *Use Private Key*; anotar a **Private Key**.
+- [x] **EmailJS** (Account → Security): ligar _Allow EmailJS API for non-browser applications_ e _Use Private Key_; anotar a **Private Key**.
 - [ ] **EmailJS** (Email Templates): criar o template de redefinição de senha com `{{nome}}`, `{{redefinir_url}}` e `{{validade}}`, destinatário `{{to_email}}`. O de convite continua o mesmo.
 - [ ] Decidir o **e-mail que recebe os pedidos de acesso** (`VITE_EMAIL_SOLICITAR_ACESSO`).
 
 ## 1. Criar a VM no Proxmox
 
-| Item | Valor |
-|---|---|
-| SO | Ubuntu Server 24.04 LTS (ou Debian 12) |
-| CPU / RAM / disco | 2 vCPU / 2 GB / 20 GB (sobra folga) |
-| Rede | **IP fixo** e, se possível, um nome no DNS interno |
+| Item              | Valor                                              |
+| ----------------- | -------------------------------------------------- |
+| SO                | Ubuntu Server 24.04 LTS (ou Debian 12)             |
+| CPU / RAM / disco | 2 vCPU / 2 GB / 20 GB (sobra folga)                |
+| Rede              | **IP fixo** e, se possível, um nome no DNS interno |
 
 LXC também serve, mas precisa de `nesting=1` e `keyctl=1` para o Docker; VM dá menos trabalho.
 
@@ -48,7 +47,6 @@ sudo ufw allow OpenSSH && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sud
 sudo mkdir -p /opt/epi-system && sudo chown $USER: /opt/epi-system
 git clone https://github.com/wsabor/epi-system.git /opt/epi-system
 cd /opt/epi-system
-git checkout refactor/api-postgres   # até ela ser mesclada na main
 ```
 
 ## 4. Configurar o `.env`
@@ -62,14 +60,14 @@ nano .env
 
 Valores de produção (o resto pode ficar como está):
 
-| Variável | Valor |
-|---|---|
-| `POSTGRES_PASSWORD` | o gerado acima |
-| `JWT_SEGREDO` | o gerado acima |
-| `APP_URL` | o endereço que as pessoas vão digitar: `http://IP-DA-VM` ou `https://nome` (seção 6) |
-| `EMAILJS_*` | os 5 valores da sua conta (seção 0) |
-| `VITE_EMAIL_SOLICITAR_ACESSO` | e-mail que recebe pedidos de acesso |
-| `ADMIN_INICIAL_*` | seu nome, e-mail e uma senha temporária |
+| Variável                      | Valor                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `POSTGRES_PASSWORD`           | o gerado acima                                                                       |
+| `JWT_SEGREDO`                 | o gerado acima                                                                       |
+| `APP_URL`                     | o endereço que as pessoas vão digitar: `http://IP-DA-VM` ou `https://nome` (seção 6) |
+| `EMAILJS_*`                   | os 5 valores da sua conta (seção 0)                                                  |
+| `VITE_EMAIL_SOLICITAR_ACESSO` | e-mail que recebe pedidos de acesso                                                  |
+| `ADMIN_INICIAL_*`             | seu nome, e-mail e uma senha temporária                                              |
 
 `DATABASE_URL` e `API_PORT` só valem em desenvolvimento — em produção o compose monta a conexão sozinho.
 
@@ -101,11 +99,11 @@ SITE_ENDERECO=<endereço>
 
 Escolha conforme o endereço:
 
-| Situação | `SITE_ENDERECO` | `CADDY_TLS` | Certificado |
-|---|---|---|---|
-| Domínio público apontando para a VM (portas 80/443 acessíveis da internet) | `epi.exemplo.com.br` | vazio | Let's Encrypt, automático |
-| Só rede interna, acesso pelo IP | `10.0.0.50` | vazio | CA própria do Caddy |
-| Só rede interna, nome no DNS do SENAI | `epi.senai.local` | `tls internal` | CA própria do Caddy |
+| Situação                                                                   | `SITE_ENDERECO`      | `CADDY_TLS`    | Certificado               |
+| -------------------------------------------------------------------------- | -------------------- | -------------- | ------------------------- |
+| Domínio público apontando para a VM (portas 80/443 acessíveis da internet) | `epi.exemplo.com.br` | vazio          | Let's Encrypt, automático |
+| Só rede interna, acesso pelo IP                                            | `10.0.0.50`          | vazio          | CA própria do Caddy       |
+| Só rede interna, nome no DNS do SENAI                                      | `epi.senai.local`    | `tls internal` | CA própria do Caddy       |
 
 ```bash
 docker compose up -d --build
@@ -117,7 +115,7 @@ docker compose up -d --build
 docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
 ```
 
-Instale o `caddy-root.crt` como *Autoridade de Certificação Raiz Confiável* nos computadores que usam o sistema (a TI pode distribuir por GPO). Até lá, dá para usar clicando em "avançar" no aviso — ainda é criptografado, mas o ideal é instalar.
+Instale o `caddy-root.crt` como _Autoridade de Certificação Raiz Confiável_ nos computadores que usam o sistema (a TI pode distribuir por GPO). Até lá, dá para usar clicando em "avançar" no aviso — ainda é criptografado, mas o ideal é instalar.
 
 ## 7. Backups
 

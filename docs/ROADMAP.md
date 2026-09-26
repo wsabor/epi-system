@@ -66,7 +66,7 @@ Cada item tem uma fase responsável; nenhum deve ser "portado" como está.
 
 ## Fase 0 — Preparação e decisões pendentes
 
-- [x] Criar a branch `refactor/api-postgres` (a `main` fica intacta como backup até o corte)
+- [x] Branch `refactor/api-postgres` para a refatoração — mesclada na `main` em 26/09/2026 (versão antiga preservada na tag `v1-firebase`)
 - [ ] Levantar volume de dados por coleção no Firestore (`epis`, `movimentacoes`, `usuarios`, `logs`, `convites`)
 - [x] Matriz de permissões (fonte única da verdade, aplicada na API):
 
@@ -275,7 +275,7 @@ O sistema nunca foi para produção: o que existe no Firebase são dados de exem
 
 ## Fase 8 — Deploy no Proxmox (go-live)
 
-Roteiro de execução, comando a comando: **[docs/DEPLOY.md](DEPLOY.md)**. Pré-requisito: a branch `refactor/api-postgres` no GitHub (push) ou mesclada na `main`.
+Roteiro de execução, comando a comando: **[docs/DEPLOY.md](DEPLOY.md)**. A refatoração foi mesclada na `main` em 26/09/2026; a última versão com Firebase ficou na tag `v1-firebase`.
 
 - [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção: `JWT_SEGREDO` e senha do Postgres **novos e aleatórios**, `NODE_ENV=production`, `COOKIE_SECURE=true`; arquivo com `chmod 600`, dono root
 - [ ] Rodar o seed de produção, trocar a senha do admin inicial no primeiro login e **apagar `ADMIN_INICIAL_SENHA` do `.env`**
