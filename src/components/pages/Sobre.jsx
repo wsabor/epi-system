@@ -47,8 +47,10 @@ const Sobre = () => {
   ];
 
   const tecnologias = [
-    { nome: "React 18", cor: "bg-blue-100 text-blue-800" },
-    { nome: "Firebase", cor: "bg-yellow-100 text-yellow-800" },
+    { nome: "React 19", cor: "bg-blue-100 text-blue-800" },
+    { nome: "Node.js + Express", cor: "bg-green-100 text-green-800" },
+    { nome: "PostgreSQL", cor: "bg-indigo-100 text-indigo-800" },
+    { nome: "Docker", cor: "bg-sky-100 text-sky-800" },
     { nome: "Tailwind CSS", cor: "bg-cyan-100 text-cyan-800" },
     { nome: "Recharts", cor: "bg-purple-100 text-purple-800" },
     { nome: "Lucide Icons", cor: "bg-pink-100 text-pink-800" },
@@ -180,9 +182,9 @@ const Sobre = () => {
               </p>
               <p className="text-gray-700 leading-relaxed mb-4">
                 Sistema desenvolvido como projeto de gestão de EPIs,
-                demonstrando habilidades em desenvolvimento front-end,
-                integração com Firebase, design de interfaces e implementação de
-                funcionalidades complexas.
+                com front-end em React, API própria em Node.js e banco
+                PostgreSQL hospedados em infraestrutura própria, com controle
+                de acesso por função e auditoria de todas as operações.
               </p>
 
               {/* Links de Contato */}

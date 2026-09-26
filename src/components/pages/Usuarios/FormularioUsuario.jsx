@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { X, Save, Shield, Users, Eye, AlertCircle } from "lucide-react";
+import { X, Save, Shield, AlertCircle } from "lucide-react";
+import { useOpcoes } from "../../../hooks/useOpcoes";
 
-const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
+// Só edição: usuário novo entra por convite. O e-mail é a identidade de login e não muda.
+const FormularioUsuario = ({ usuario, roles, ehVoceMesmo, onSalvar, onCancelar }) => {
+  const opcoes = useOpcoes();
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -29,12 +32,6 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
 
     if (!formData.nome.trim()) {
       novosErros.nome = "Nome é obrigatório";
-    }
-
-    if (!formData.email.trim()) {
-      novosErros.email = "Email é obrigatório";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      novosErros.email = "Email inválido";
     }
 
     if (!formData.departamento.trim()) {
@@ -69,14 +66,8 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {usuario ? "Editar Usuário" : "Novo Usuário"}
-          </h2>
-          <p className="text-gray-600">
-            {usuario
-              ? "Atualize as informações do usuário"
-              : "Preencha os dados para criar um novo usuário"}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900">Editar Usuário</h2>
+          <p className="text-gray-600">Atualize as informações do usuário</p>
         </div>
         <button
           onClick={onCancelar}
@@ -123,18 +114,10 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                  erros.email ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="email@provedor.br"
+                disabled
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600"
               />
-              {erros.email && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle size={14} className="mr-1" />
-                  {erros.email}
-                </p>
-              )}
+              <p className="mt-1 text-xs text-gray-500">O e-mail é o login do usuário e não pode ser alterado.</p>
             </div>
 
             <div>
@@ -164,12 +147,11 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
                 }`}
               >
                 <option value="">Selecione o departamento</option>
-                <option value="TI">TI</option>
-                <option value="Almoxarifado">Almoxarifado</option>
-                <option value="Segurança">Segurança</option>
-                <option value="Produção">Produção</option>
-                <option value="Administrativo">Administrativo</option>
-                <option value="RH">Recursos Humanos</option>
+                {opcoes?.departamentos.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
               </select>
               {erros.departamento && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -192,6 +174,11 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Selecione a Função
               </label>
+              {ehVoceMesmo && (
+                <p className="mb-3 text-sm text-gray-500">
+                  Você não pode alterar a sua própria função (isso evita o sistema ficar sem administrador).
+                </p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {Object.entries(roles).map(([key, config]) => {
                   const Icon = config.icon;
@@ -201,10 +188,11 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
                     <button
                       key={key}
                       type="button"
+                      disabled={ehVoceMesmo && !isSelected}
                       onClick={() =>
                         setFormData((prev) => ({ ...prev, role: key }))
                       }
-                      className={`p-4 border-2 rounded-lg transition-all ${
+                      className={`p-4 border-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                         isSelected
                           ? "border-red-500 bg-red-50"
                           : "border-gray-200 hover:border-gray-300"
@@ -268,7 +256,7 @@ const FormularioUsuario = ({ usuario, roles, onSalvar, onCancelar }) => {
             className="flex items-center space-x-2 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             <Save size={18} />
-            <span>{usuario ? "Salvar Alterações" : "Criar Usuário"}</span>
+            <span>Salvar Alterações</span>
           </button>
         </div>
       </form>

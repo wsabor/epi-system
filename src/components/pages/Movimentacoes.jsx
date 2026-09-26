@@ -9,6 +9,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import MovimentacaoDetalhesModal from "../modals/MovimentacaoDetalhesModal";
+import { dataLocal } from "../../utils/datas";
 
 const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao, canCreate = true }) => {
   const [searchMovTerm, setSearchMovTerm] = useState("");
@@ -31,12 +32,14 @@ const Movimentacoes = ({ movimentacoes = [], onNovaMovimentacao, canCreate = tru
         responsavel.toLowerCase().includes(searchMovTerm.toLowerCase());
       const matchesTipo = !filterMovTipo || mov?.tipo === filterMovTipo;
 
+      // Período em dias locais, inclusive nas duas pontas; cada ponta funciona sozinha.
+      const movData = new Date(mov.data);
       let matchesData = true;
-      if (filterDataInicio && filterDataFim && mov?.data) {
-        const movData = new Date(mov.data);
-        const dataInicio = new Date(filterDataInicio);
-        const dataFim = new Date(filterDataFim);
-        matchesData = movData >= dataInicio && movData <= dataFim;
+      if (filterDataInicio) matchesData &&= movData >= dataLocal(filterDataInicio);
+      if (filterDataFim) {
+        const fim = dataLocal(filterDataFim);
+        fim.setDate(fim.getDate() + 1);
+        matchesData &&= movData < fim;
       }
 
       return matchesSearch && matchesTipo && matchesData;

@@ -20,163 +20,87 @@ import EPIDetalhesModal from "./components/modals/EPIDetalhesModal";
 // Hooks
 import { useEPIs } from "./hooks/useEPIs";
 import { useMovimentacoes } from "./hooks/useMovimentacoes";
+import { dataLocal } from "./utils/datas";
+
+// Permissão necessária para abrir cada tela (a API confere de novo em cada chamada).
+const PERMISSAO_DA_TELA = {
+  dashboard: "epis:ver",
+  estoque: "epis:ver",
+  movimentacoes: "movimentacoes:ver",
+  relatorios: "relatorios:gerar",
+  usuarios: "usuarios:gerir",
+};
+
+const Carregando = ({ texto }) => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">{texto}</p>
+    </div>
+  </div>
+);
 
 const App = () => {
-  // Auth
-  const { currentUser, userProfile, loading: authLoading } = useAuth();
+  const { usuario, loading: authLoading, hasPermission } = useAuth();
 
   // Estados de navegação
   const [currentView, setCurrentView] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Dados do Firebase via hooks customizados
-  const {
-    epis,
-    loading: loadingEPIs,
-    addEPI,
-    updateEPI,
-    deleteEPI,
-  } = useEPIs();
-  const {
-    movimentacoes,
-    loading: loadingMovimentacoes,
-    addMovimentacao,
-  } = useMovimentacoes();
+  const { epis, loading: loadingEPIs, addEPI, updateEPI, setAtivoEPI, recarregar: recarregarEPIs } = useEPIs();
+  const { movimentacoes, loading: loadingMovimentacoes, addMovimentacao } = useMovimentacoes();
+  const episAtivos = epis.filter((epi) => epi.ativo);
 
   // Estados dos modais
   const [showAddEPI, setShowAddEPI] = useState(false);
-  const [showMovimentacao, setShowMovimentacao] = useState(false);
   const [editingEPI, setEditingEPI] = useState(null);
   const [viewingEPI, setViewingEPI] = useState(null);
+  // undefined = fechado; null = aberto sem EPI escolhido; objeto = aberto com o EPI pré-selecionado
+  const [movimentacaoEPI, setMovimentacaoEPI] = useState(undefined);
 
-  // Handlers para EPIs
-  const handleSaveEPI = async (epiData) => {
+  // Os modais aguardam estas funções e mostram o erro da API sem fechar.
+  const handleSaveEPI = async (dados) => {
+    if (editingEPI) {
+      await updateEPI(editingEPI.id, dados);
+    } else {
+      await addEPI(dados);
+    }
+    setShowAddEPI(false);
+    setEditingEPI(null);
+  };
+
+  const handleToggleAtivo = async (epi) => {
+    const acao = epi.ativo ? "desativar" : "reativar";
+    const aviso = epi.ativo
+      ? "\n\nEle deixa de aceitar movimentações, mas o histórico é mantido."
+      : "";
+    if (!window.confirm(`Tem certeza que deseja ${acao} "${epi.descricao}"?${aviso}`)) return;
     try {
-      if (epiData.id && epis.find((e) => e.id === epiData.id)) {
-        // Editar EPI existente
-        await updateEPI(epiData.id, epiData);
-      } else {
-        // Adicionar novo EPI
-        await addEPI(epiData);
-      }
-      setShowAddEPI(false);
-      setEditingEPI(null);
+      await setAtivoEPI(epi.id, !epi.ativo);
     } catch (error) {
-      alert("Erro ao salvar EPI: " + error.message);
+      alert(`Erro ao ${acao} EPI: ${error.message}`);
     }
   };
 
-  const handleDeleteEPI = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir este EPI?")) {
-      try {
-        await deleteEPI(id);
-      } catch (error) {
-        alert("Erro ao excluir EPI: " + error.message);
-      }
-    }
+  const handleSaveMovimentacao = async (dados) => {
+    await addMovimentacao(dados);
+    await recarregarEPIs(); // o saldo do EPI mudou
+    setMovimentacaoEPI(undefined);
   };
 
-  // Handler para movimentações
-  const handleSaveMovimentacao = async (movimentacaoData, epiSelecionado) => {
-    try {
-      // Salvar movimentação no Firebase
-      await addMovimentacao({
-        epiId: epiSelecionado.id,
-        epiDescricao: epiSelecionado.descricao,
-        tipo: movimentacaoData.tipo,
-        quantidade: movimentacaoData.quantidade,
-        quantidadeAnterior: epiSelecionado.quantidadeAtual,
-        responsavel: movimentacaoData.responsavel,
-        funcionarioRecebeu: movimentacaoData.funcionarioRecebeu || "",
-        motivo: movimentacaoData.motivo,
-        observacoes: movimentacaoData.observacoes || "",
-        userId: currentUser?.uid || "unknown",
-      });
+  // Alertas do cabeçalho: vencidos, vencendo e estoque baixo (só EPIs ativos)
+  const alertas = episAtivos.filter((epi) => {
+    const diffDays = Math.ceil((dataLocal(epi.dataValidade) - new Date()) / (1000 * 60 * 60 * 24));
+    return diffDays <= epi.diasAvisoVencimento || epi.quantidadeAtual <= epi.estoqueMinimo;
+  }).length;
 
-      // Calcular nova quantidade
-      let novaQuantidade = epiSelecionado.quantidadeAtual;
+  if (authLoading) return <Carregando texto="Carregando..." />;
+  if (!usuario) return <AuthWrapper />;
+  if (loadingEPIs || loadingMovimentacoes) return <Carregando texto="Carregando dados..." />;
 
-      switch (movimentacaoData.tipo) {
-        case "entrada":
-          novaQuantidade += movimentacaoData.quantidade;
-          break;
-        case "saida":
-        case "perda":
-          novaQuantidade = Math.max(
-            0,
-            novaQuantidade - movimentacaoData.quantidade
-          );
-          break;
-        case "ajuste":
-          novaQuantidade = movimentacaoData.quantidade;
-          break;
-        default:
-          break;
-      }
-
-      // Atualizar quantidade do EPI no Firebase
-      await updateEPI(epiSelecionado.id, {
-        ...epiSelecionado,
-        quantidadeAtual: novaQuantidade,
-      });
-
-      setShowMovimentacao(false);
-    } catch (error) {
-      alert("Erro ao salvar movimentação: " + error.message);
-    }
-  };
-
-  // Calcular alertas (usado pelo Header)
-  const calcularAlertas = () => {
-    return epis.filter((epi) => {
-      const today = new Date();
-      const validadeDate = new Date(epi.dataValidade);
-      const diffDays = Math.ceil(
-        (validadeDate - today) / (1000 * 60 * 60 * 24)
-      );
-
-      return (
-        diffDays < 0 ||
-        diffDays <= epi.diasAvisoVencimento ||
-        epi.quantidadeAtual <= epi.estoqueMinimo
-      );
-    }).length;
-  };
-
-  // Verificar permissões
-  const canAccessUsuarios = userProfile?.role === "admin";
-  const canEditEPIs =
-    userProfile?.role === "admin" || userProfile?.role === "operador";
-  const canViewReports = userProfile?.role !== undefined;
-
-  // Loading state da autenticação
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se não estiver autenticado, mostra telas de login/registro
-  if (!currentUser) {
-    return <AuthWrapper />;
-  }
-
-  // Loading state dos dados
-  if (loadingEPIs || loadingMovimentacoes) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados do Firebase...</p>
-        </div>
-      </div>
-    );
-  }
+  const permissaoTela = PERMISSAO_DA_TELA[currentView];
+  const podeVerTela = !permissaoTela || hasPermission(permissaoTela);
+  const podeMovimentar = hasPermission("movimentacoes:criar");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -185,100 +109,86 @@ const App = () => {
         setSidebarOpen={setSidebarOpen}
         currentView={currentView}
         setCurrentView={setCurrentView}
-        userRole={userProfile?.role}
       />
 
       {/* Overlay para mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Conteúdo principal */}
       <div className="md:ml-64 flex flex-col min-h-screen">
-        <Header
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          alertas={calcularAlertas()}
-          currentUser={currentUser}
-          userProfile={userProfile}
-        />
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} alertas={alertas} />
 
         <main className="flex-1 p-6">
-          {currentView === "dashboard" && <Dashboard epis={epis} />}
-
-          {currentView === "estoque" && (
-            <ControleEstoque
-              epis={epis}
-              onAddEPI={() => canEditEPIs && setShowAddEPI(true)}
-              onEditEPI={(epi) => canEditEPIs && setEditingEPI(epi)}
-              onDeleteEPI={canEditEPIs ? handleDeleteEPI : null}
-              onMovimentacao={() => canEditEPIs && setShowMovimentacao(true)}
-              onViewEPI={(epi) => setViewingEPI(epi)}
-              canEdit={canEditEPIs}
-            />
-          )}
-
-          {currentView === "movimentacoes" && (
-            <Movimentacoes
-              movimentacoes={movimentacoes}
-              onNovaMovimentacao={() =>
-                canEditEPIs && setShowMovimentacao(true)
-              }
-              canCreate={canEditEPIs}
-            />
-          )}
-
-          {currentView === "relatorios" && canViewReports && (
-            <Relatorios epis={epis} movimentacoes={movimentacoes} />
-          )}
-
-          {currentView === "usuarios" && canAccessUsuarios && <Usuarios />}
-
-          {currentView === "sobre" && <Sobre />}
-
-          {/* Mensagem de acesso negado */}
-          {currentView === "usuarios" && !canAccessUsuarios && (
+          {!podeVerTela && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-              <p className="text-gray-600">
-                Você não tem permissão para acessar esta página.
-              </p>
+              <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
             </div>
           )}
+
+          {podeVerTela && currentView === "dashboard" && <Dashboard epis={episAtivos} />}
+
+          {podeVerTela && currentView === "estoque" && (
+            <ControleEstoque
+              epis={epis}
+              onAddEPI={() => setShowAddEPI(true)}
+              onEditEPI={(epi) => setEditingEPI(epi)}
+              onToggleAtivo={handleToggleAtivo}
+              onMovimentacao={(epi = null) => setMovimentacaoEPI(epi)}
+              onViewEPI={(epi) => setViewingEPI(epi)}
+              podeCriar={hasPermission("epis:criar")}
+              podeEditar={hasPermission("epis:editar")}
+              podeMovimentar={podeMovimentar}
+              podeAtivar={hasPermission("epis:ativar")}
+            />
+          )}
+
+          {podeVerTela && currentView === "movimentacoes" && (
+            <Movimentacoes
+              movimentacoes={movimentacoes}
+              onNovaMovimentacao={() => setMovimentacaoEPI(null)}
+              canCreate={podeMovimentar}
+            />
+          )}
+
+          {podeVerTela && currentView === "relatorios" && (
+            <Relatorios
+              epis={episAtivos}
+              movimentacoes={movimentacoes}
+              podeExportar={hasPermission("relatorios:exportar")}
+            />
+          )}
+
+          {podeVerTela && currentView === "usuarios" && <Usuarios />}
+
+          {currentView === "sobre" && <Sobre />}
         </main>
       </div>
 
       {/* Modais */}
-      {canEditEPIs && (
-        <>
-          <EPIModal
-            isOpen={showAddEPI}
-            onClose={() => setShowAddEPI(false)}
-            onSave={handleSaveEPI}
-          />
-          <EPIModal
-            isOpen={!!editingEPI}
-            onClose={() => setEditingEPI(null)}
-            epi={editingEPI}
-            onSave={handleSaveEPI}
-          />
-          <MovimentacaoModal
-            isOpen={showMovimentacao}
-            onClose={() => setShowMovimentacao(false)}
-            epis={epis}
-            currentUser={currentUser}
-            onSave={handleSaveMovimentacao}
-          />
-        </>
-      )}
-
-      <EPIDetalhesModal
-        isOpen={!!viewingEPI}
-        onClose={() => setViewingEPI(null)}
-        epi={viewingEPI}
+      <EPIModal
+        isOpen={showAddEPI || !!editingEPI}
+        onClose={() => {
+          setShowAddEPI(false);
+          setEditingEPI(null);
+        }}
+        epi={editingEPI}
+        onSave={handleSaveEPI}
       />
+      {movimentacaoEPI !== undefined && (
+        <MovimentacaoModal
+          isOpen
+          onClose={() => setMovimentacaoEPI(undefined)}
+          epis={episAtivos}
+          epiInicial={movimentacaoEPI}
+          onSave={handleSaveMovimentacao}
+        />
+      )}
+      <EPIDetalhesModal isOpen={!!viewingEPI} onClose={() => setViewingEPI(null)} epi={viewingEPI} />
     </div>
   );
 };

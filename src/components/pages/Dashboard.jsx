@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Package, AlertTriangle, Calendar } from "lucide-react";
 import StatsCard from "../ui/StatsCard";
+import { dataLocal } from "../../utils/datas";
 
 const Dashboard = ({ epis }) => {
   // Ícones para as categorias
@@ -18,7 +19,7 @@ const Dashboard = ({ epis }) => {
   // Função para determinar status do EPI
   const determineEPIStatus = (epi) => {
     const today = new Date();
-    const validadeDate = new Date(epi.dataValidade);
+    const validadeDate = dataLocal(epi.dataValidade);
     const diffDays = Math.ceil((validadeDate - today) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) return "vencido";

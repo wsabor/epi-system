@@ -7,13 +7,14 @@ import {
   Shield,
   Eye,
   Edit2,
-  Trash2,
   ToggleLeft,
   ToggleRight,
   Clock,
-  AlertCircle,
   CheckCircle,
   XCircle,
+  Mail,
+  Ban,
+  History,
 } from "lucide-react";
 import FormularioUsuario from "./FormularioUsuario";
 import ModalConfirmacao from "./ModalConfirmacao";
@@ -21,22 +22,22 @@ import LogAuditoria from "./LogAuditoria";
 import ConviteUsuarioModal from "../../modals/ConviteUsuarioModal";
 
 import { useUsuarios } from "../../../hooks/useUsuarios";
-import { useLogs } from "../../../hooks/useLogs";
+import { useConvites } from "../../../hooks/useConvites";
 import { useAuth } from "../../../contexts/AuthContext";
 
-const Usuarios = () => {
-  // Hooks do Firebase
-  const {
-    usuarios,
-    loading: loadingUsuarios,
-    addUsuario,
-    updateUsuario,
-    deleteUsuario,
-    toggleUsuarioStatus,
-  } = useUsuarios();
+const STATUS_CONVITE = {
+  pendente: { texto: "Pendente", classe: "bg-yellow-100 text-yellow-800" },
+  usado: { texto: "Aceito", classe: "bg-green-100 text-green-800" },
+  expirado: { texto: "Expirado", classe: "bg-gray-100 text-gray-700" },
+  revogado: { texto: "Revogado", classe: "bg-red-100 text-red-800" },
+};
 
-  const { logs, addLog } = useLogs();
-  const { currentUser } = useAuth();
+// Usuários entram só por convite e nunca são excluídos (só desativados): o histórico fica preservado.
+// A auditoria é gravada pela API; esta tela apenas consulta.
+const Usuarios = () => {
+  const { usuarios, loading: loadingUsuarios, updateUsuario, setAtivoUsuario } = useUsuarios();
+  const { convites, criarConvite, revogarConvite } = useConvites();
+  const { usuario: usuarioLogado } = useAuth();
 
   const [busca, setBusca] = useState("");
   const [filtroRole, setFiltroRole] = useState("todos");
@@ -60,12 +61,11 @@ const Usuarios = () => {
       cor: "red",
       icon: Shield,
       permissoes: [
-        "Acesso total ao sistema",
-        "Gerenciar usuários",
-        "Configurar sistema",
-        "Criar/Editar/Excluir EPIs",
+        "Convidar, editar e desativar usuários",
+        "Cadastrar e editar EPIs",
+        "Ativar e desativar EPIs",
         "Registrar movimentações",
-        "Gerar relatórios",
+        "Gerar e exportar relatórios",
         "Visualizar auditoria",
       ],
     },
@@ -74,9 +74,9 @@ const Usuarios = () => {
       cor: "blue",
       icon: Users,
       permissoes: [
-        "Criar/Editar EPIs",
+        "Cadastrar e editar EPIs",
         "Registrar movimentações",
-        "Gerar relatórios",
+        "Gerar e exportar relatórios",
         "Visualizar estoque",
       ],
     },
@@ -84,7 +84,7 @@ const Usuarios = () => {
       nome: "Visualizador",
       cor: "gray",
       icon: Eye,
-      permissoes: ["Visualizar estoque", "Gerar relatórios básicos"],
+      permissoes: ["Visualizar estoque e movimentações"],
     },
   };
 
@@ -128,27 +128,9 @@ const Usuarios = () => {
     setMostrarFormulario(true);
   };
 
-  const handleSalvarUsuario = async (dadosUsuario) => {
+  const handleSalvarUsuario = async ({ nome, departamento, telefone, role }) => {
     try {
-      if (usuarioEditando) {
-        // Editar
-        await updateUsuario(usuarioEditando.id, dadosUsuario);
-        await registrarLog({
-          usuarioId: currentUser?.uid || "admin",
-          usuarioNome: currentUser?.displayName || "Admin Sistema",
-          acao: "EDITAR_USUARIO",
-          descricao: `Editou o usuário: ${dadosUsuario.nome}`,
-        });
-      } else {
-        // Criar
-        await addUsuario(dadosUsuario);
-        await registrarLog({
-          usuarioId: currentUser?.uid || "admin",
-          usuarioNome: currentUser?.displayName || "Admin Sistema",
-          acao: "CRIAR_USUARIO",
-          descricao: `Criou o usuário: ${dadosUsuario.nome}`,
-        });
-      }
+      await updateUsuario(usuarioEditando.id, { nome, departamento, telefone, role });
       setMostrarFormulario(false);
       setUsuarioEditando(null);
     } catch (error) {
@@ -156,26 +138,20 @@ const Usuarios = () => {
     }
   };
 
+  const fecharConfirmacao = () => setModalConfirmacao((m) => ({ ...m, aberto: false }));
+
   const handleToggleStatus = (usuario) => {
     setModalConfirmacao({
       aberto: true,
-      titulo: usuario.ativo ? "Desativar Usuário" : "Ativar Usuário",
-      mensagem: `Tem certeza que deseja ${
-        usuario.ativo ? "desativar" : "ativar"
-      } o usuário ${usuario.nome}?`,
+      titulo: usuario.ativo ? "Desativar Usuário" : "Reativar Usuário",
+      mensagem: usuario.ativo
+        ? `Desativar ${usuario.nome}? O acesso é bloqueado na hora e o histórico é mantido.`
+        : `Reativar ${usuario.nome}? Ele(a) poderá entrar novamente com a senha que já tinha.`,
       tipo: usuario.ativo ? "warning" : "info",
       onConfirmar: async () => {
         try {
-          await toggleUsuarioStatus(usuario.id, !usuario.ativo);
-          await registrarLog({
-            usuarioId: currentUser?.uid || "admin",
-            usuarioNome: currentUser?.displayName || "Admin Sistema",
-            acao: usuario.ativo ? "DESATIVAR_USUARIO" : "ATIVAR_USUARIO",
-            descricao: `${usuario.ativo ? "Desativou" : "Ativou"} o usuário: ${
-              usuario.nome
-            }`,
-          });
-          setModalConfirmacao({ ...modalConfirmacao, aberto: false });
+          await setAtivoUsuario(usuario.id, !usuario.ativo);
+          fecharConfirmacao();
         } catch (error) {
           alert("Erro ao alterar status: " + error.message);
         }
@@ -183,57 +159,30 @@ const Usuarios = () => {
     });
   };
 
-  const handleExcluirUsuario = (usuario) => {
+  const handleRevogarConvite = (convite) => {
     setModalConfirmacao({
       aberto: true,
-      titulo: "Excluir Usuário",
-      mensagem: `Tem certeza que deseja excluir permanentemente o usuário ${usuario.nome}? Esta ação não pode ser desfeita.`,
-      tipo: "danger",
+      titulo: "Revogar Convite",
+      mensagem: `Revogar o convite de ${convite.email}? O link enviado deixa de funcionar.`,
+      tipo: "warning",
       onConfirmar: async () => {
         try {
-          await deleteUsuario(usuario.id);
-          await registrarLog({
-            usuarioId: currentUser?.uid || "admin",
-            usuarioNome: currentUser?.displayName || "Admin Sistema",
-            acao: "EXCLUIR_USUARIO",
-            descricao: `Excluiu o usuário: ${usuario.nome}`,
-          });
-          setModalConfirmacao({ ...modalConfirmacao, aberto: false });
+          await revogarConvite(convite.id);
+          fecharConfirmacao();
         } catch (error) {
-          alert("Erro ao excluir usuário: " + error.message);
+          alert("Erro ao revogar convite: " + error.message);
         }
       },
     });
   };
 
+  // usuario = null abre a auditoria geral (todas as ações do sistema)
   const handleVisualizarAuditoria = (usuario) => {
     setUsuarioAuditoria(usuario);
     setVisualizarAuditoria(true);
   };
 
-  const registrarLog = async ({ usuarioId, usuarioNome, acao, descricao }) => {
-    try {
-      await addLog({
-        usuarioId,
-        usuarioNome,
-        acao,
-        descricao,
-      });
-    } catch (error) {
-      console.error("Erro ao registrar log:", error);
-    }
-  };
-
-  const formatarData = (data) => {
-    if (!data) return "Nunca";
-
-    // Converter Timestamp do Firebase para Date
-    if (data?.toDate) {
-      return data.toDate().toLocaleString("pt-BR");
-    }
-
-    return new Date(data).toLocaleString("pt-BR");
-  };
+  const formatarData = (data) => (data ? new Date(data).toLocaleString("pt-BR") : "Nunca");
 
   // Loading state
   if (loadingUsuarios) {
@@ -249,11 +198,7 @@ const Usuarios = () => {
 
   if (visualizarAuditoria) {
     return (
-      <LogAuditoria
-        usuario={usuarioAuditoria}
-        logs={logs.filter((log) => log.usuarioId === usuarioAuditoria?.id)}
-        onVoltar={() => setVisualizarAuditoria(false)}
-      />
+      <LogAuditoria usuario={usuarioAuditoria} onVoltar={() => setVisualizarAuditoria(false)} />
     );
   }
 
@@ -262,6 +207,7 @@ const Usuarios = () => {
       <FormularioUsuario
         usuario={usuarioEditando}
         roles={roles}
+        ehVoceMesmo={usuarioEditando?.id === usuarioLogado?.id}
         onSalvar={handleSalvarUsuario}
         onCancelar={() => {
           setMostrarFormulario(false);
@@ -277,9 +223,7 @@ const Usuarios = () => {
       <ConviteUsuarioModal
         isOpen={mostrarConvite}
         onClose={() => setMostrarConvite(false)}
-        onSuccess={() => {
-          alert("✅ Convite enviado com sucesso!");
-        }}
+        criarConvite={criarConvite}
       />
 
       {/* Modal de Confirmação */}
@@ -304,13 +248,22 @@ const Usuarios = () => {
             Controle de acesso e permissões do sistema
           </p>
         </div>
-        <button
-          onClick={handleNovoUsuario}
-          className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <UserPlus size={20} />
-          <span>Novo Usuário</span>
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleVisualizarAuditoria(null)}
+            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <History size={20} />
+            <span>Auditoria geral</span>
+          </button>
+          <button
+            onClick={handleNovoUsuario}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <UserPlus size={20} />
+            <span>Convidar Usuário</span>
+          </button>
+        </div>
       </div>
 
       {/* Estatísticas */}
@@ -529,28 +482,23 @@ const Usuarios = () => {
                         >
                           <Edit2 size={18} />
                         </button>
-                        <button
-                          onClick={() => handleToggleStatus(usuario)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            usuario.ativo
-                              ? "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
-                              : "text-gray-600 hover:text-green-600 hover:bg-green-50"
-                          }`}
-                          title={usuario.ativo ? "Desativar" : "Ativar"}
-                        >
-                          {usuario.ativo ? (
-                            <ToggleRight size={18} />
-                          ) : (
-                            <ToggleLeft size={18} />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleExcluirUsuario(usuario)}
-                          className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {usuario.id !== usuarioLogado?.id && (
+                          <button
+                            onClick={() => handleToggleStatus(usuario)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              usuario.ativo
+                                ? "text-gray-600 hover:text-orange-600 hover:bg-orange-50"
+                                : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                            }`}
+                            title={usuario.ativo ? "Desativar" : "Reativar"}
+                          >
+                            {usuario.ativo ? (
+                              <ToggleRight size={18} />
+                            ) : (
+                              <ToggleLeft size={18} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -569,10 +517,73 @@ const Usuarios = () => {
             Nenhum usuário encontrado
           </h3>
           <p className="text-gray-500">
-            Tente ajustar os filtros ou criar um novo usuário
+            Tente ajustar os filtros ou convide um novo usuário
           </p>
         </div>
       )}
+
+      {/* Convites */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center space-x-2">
+          <Mail size={18} className="text-gray-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Convites</h3>
+        </div>
+        {convites.length === 0 ? (
+          <p className="p-6 text-sm text-gray-500 text-center">Nenhum convite enviado ainda.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Convidado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Função</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Criado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expira</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {convites.map((convite) => {
+                  const status = STATUS_CONVITE[convite.status];
+                  return (
+                    <tr key={convite.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-900">{convite.nome}</p>
+                        <p className="text-sm text-gray-500">{convite.email}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{roles[convite.role]?.nome}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(convite.criadoEm).toLocaleDateString("pt-BR")}
+                        <span className="block text-xs text-gray-400">por {convite.criadoPorNome}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(convite.expiraEm).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${status.classe}`}>
+                          {status.texto}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {convite.status === "pendente" && (
+                          <button
+                            onClick={() => handleRevogarConvite(convite)}
+                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Revogar convite"
+                          >
+                            <Ban size={18} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

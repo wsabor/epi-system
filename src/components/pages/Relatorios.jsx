@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   FileText,
   Download,
@@ -28,12 +28,27 @@ import {
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { dataLocal } from "../../utils/datas";
 
-const Relatorios = ({ epis, movimentacoes }) => {
+const Relatorios = ({ epis, movimentacoes, podeExportar }) => {
   const [tipoRelatorio, setTipoRelatorio] = useState("estoque");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [categoriaFiltro, setCategoriaFiltro] = useState("");
+
+  // Período em dias locais, inclusive nas duas pontas.
+  const dentroDoPeriodo = useCallback(
+    (mov) => {
+      const movData = new Date(mov.data);
+      if (dataInicio && movData < dataLocal(dataInicio)) return false;
+      if (dataFim) {
+        const fim = dataLocal(dataFim);
+        fim.setDate(fim.getDate() + 1);
+        if (movData >= fim) return false;
+      }
+      return true;
+    },
+    [dataInicio, dataFim],
+  );
 
   // Cores para gráficos
   const COLORS = [
@@ -55,7 +70,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
   // Função para determinar status
   const determineEPIStatus = (epi) => {
     const today = new Date();
-    const validadeDate = new Date(epi.dataValidade);
+    const validadeDate = dataLocal(epi.dataValidade);
     const diffDays = Math.ceil((validadeDate - today) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) return "vencido";
@@ -103,15 +118,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
 
   // Dados para gráfico de movimentações ao longo do tempo
   const dadosMovimentacoesTempo = useMemo(() => {
-    const movimentacoesFiltradas = movimentacoes.filter((mov) => {
-      const movData = new Date(mov.data);
-      const inicio = dataInicio ? new Date(dataInicio) : null;
-      const fim = dataFim ? new Date(dataFim) : null;
-
-      if (inicio && movData < inicio) return false;
-      if (fim && movData > fim) return false;
-      return true;
-    });
+    const movimentacoesFiltradas = movimentacoes.filter(dentroDoPeriodo);
 
     // Agrupar por data
     const grupos = {};
@@ -136,7 +143,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
       const [diaB, mesB, anoB] = b.data.split("/");
       return new Date(anoA, mesA - 1, diaA) - new Date(anoB, mesB - 1, diaB);
     });
-  }, [movimentacoes, dataInicio, dataFim]);
+  }, [movimentacoes, dentroDoPeriodo]);
 
   // Top 5 EPIs mais movimentados
   const top5EPIs = useMemo(() => {
@@ -211,7 +218,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
         epi.quantidadeAtual?.toString() || "0",
         epi.tipoEstoque || "-",
         `R$ ${(epi.valorUnitario || 0).toFixed(2)}`,
-        new Date(epi.dataValidade).toLocaleDateString("pt-BR"),
+        dataLocal(epi.dataValidade).toLocaleDateString("pt-BR"),
         determineEPIStatus(epi) === "normal"
           ? "Normal"
           : determineEPIStatus(epi) === "estoque_baixo"
@@ -271,7 +278,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
       "Estoque Mínimo": epi.estoqueMinimo,
       Marca: epi.marca,
       CA: epi.numeroCA,
-      Validade: new Date(epi.dataValidade).toLocaleDateString("pt-BR"),
+      Validade: dataLocal(epi.dataValidade).toLocaleDateString("pt-BR"),
       "Valor Unitário": epi.valorUnitario,
       "Valor Total": (epi.quantidadeAtual * epi.valorUnitario).toFixed(2),
       Fornecedor: epi.fornecedor,
@@ -321,24 +328,17 @@ const Relatorios = ({ epis, movimentacoes }) => {
         doc.text("Período:", 14, startY);
         const periodo = `${
           dataInicio
-            ? new Date(dataInicio).toLocaleDateString("pt-BR")
+            ? dataLocal(dataInicio).toLocaleDateString("pt-BR")
             : "Início"
         } até ${
-          dataFim ? new Date(dataFim).toLocaleDateString("pt-BR") : "Hoje"
+          dataFim ? dataLocal(dataFim).toLocaleDateString("pt-BR") : "Hoje"
         }`;
         doc.text(periodo, 14, startY + 7);
         startY += 15;
       }
 
       // Filtrar movimentações
-      const movimentacoesFiltradas = movimentacoes.filter((mov) => {
-        const movData = new Date(mov.data);
-        const inicio = dataInicio ? new Date(dataInicio) : null;
-        const fim = dataFim ? new Date(dataFim) : null;
-        if (inicio && movData < inicio) return false;
-        if (fim && movData > fim) return false;
-        return true;
-      });
+      const movimentacoesFiltradas = movimentacoes.filter(dentroDoPeriodo);
 
       // Tabela de movimentações
       const tableData = movimentacoesFiltradas.map((mov) => [
@@ -437,24 +437,26 @@ const Relatorios = ({ epis, movimentacoes }) => {
       {tipoRelatorio === "estoque" && (
         <div className="space-y-6">
           {/* Botões de Exportação */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={exportarEstoquePDF}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Download size={16} />
-                <span>Exportar PDF</span>
-              </button>
-              <button
-                onClick={exportarEstoqueExcel}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download size={16} />
-                <span>Exportar Excel</span>
-              </button>
+          {podeExportar && (
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={exportarEstoquePDF}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Download size={16} />
+                  <span>Exportar PDF</span>
+                </button>
+                <button
+                  onClick={exportarEstoqueExcel}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download size={16} />
+                  <span>Exportar Excel</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Estatísticas Gerais */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -632,13 +634,15 @@ const Relatorios = ({ epis, movimentacoes }) => {
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
-              <button
-                onClick={exportarMovimentacoesPDF}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Download size={16} />
-                <span>Exportar PDF</span>
-              </button>
+              {podeExportar && (
+                <button
+                  onClick={exportarMovimentacoesPDF}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Download size={16} />
+                  <span>Exportar PDF</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -771,7 +775,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
                           <div className="text-right">
                             <p className="text-sm font-medium text-red-600">
                               Vencido em{" "}
-                              {new Date(epi.dataValidade).toLocaleDateString(
+                              {dataLocal(epi.dataValidade).toLocaleDateString(
                                 "pt-BR"
                               )}
                             </p>
@@ -810,7 +814,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
                       )
                       .map((epi) => {
                         const diasRestantes = Math.ceil(
-                          (new Date(epi.dataValidade) - new Date()) /
+                          (dataLocal(epi.dataValidade) - new Date()) /
                             (1000 * 60 * 60 * 24)
                         );
                         return (
@@ -832,7 +836,7 @@ const Relatorios = ({ epis, movimentacoes }) => {
                               </p>
                               <p className="text-xs text-gray-500">
                                 Vence em{" "}
-                                {new Date(epi.dataValidade).toLocaleDateString(
+                                {dataLocal(epi.dataValidade).toLocaleDateString(
                                   "pt-BR"
                                 )}
                               </p>

@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Shield, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
+const EMAIL_SOLICITAR_ACESSO = import.meta.env.VITE_EMAIL_SOLICITAR_ACESSO;
+
+const Login = ({ onToggleForgotPassword }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,20 +26,7 @@ const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
       setLoading(true);
       await login(email, password);
     } catch (err) {
-      console.error("Erro ao fazer login:", err);
-
-      // Mensagens de erro amigáveis
-      if (err.code === "auth/user-not-found") {
-        setError("Usuário não encontrado");
-      } else if (err.code === "auth/wrong-password") {
-        setError("Senha incorreta");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Email inválido");
-      } else if (err.code === "auth/too-many-requests") {
-        setError("Muitas tentativas. Tente novamente mais tarde");
-      } else {
-        setError("Erro ao fazer login. Tente novamente");
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -146,19 +135,24 @@ const Login = ({ onToggleRegister, onToggleForgotPassword }) => {
             </button>
           </form>
 
-          {/* Link para Registro */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Não tem uma conta?{" "}
-              <button
-                onClick={onToggleRegister}
-                className="text-red-600 hover:text-red-700 font-semibold"
-                disabled={loading}
-              >
-                Cadastre-se
-              </button>
-            </p>
-          </div>
+          {/* Cadastro só por convite: quem não tem conta pede acesso por e-mail */}
+          {EMAIL_SOLICITAR_ACESSO && (
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                Não tem uma conta?{" "}
+                <a
+                  href={`mailto:${EMAIL_SOLICITAR_ACESSO}?subject=${encodeURIComponent(
+                    "Solicitação de acesso ao EPI System",
+                  )}&body=${encodeURIComponent(
+                    "Olá! Gostaria de solicitar acesso ao EPI System.\n\nNome:\nDepartamento:\nFunção desejada:\n",
+                  )}`}
+                  className="text-red-600 hover:text-red-700 font-semibold"
+                >
+                  Solicitar acesso
+                </a>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

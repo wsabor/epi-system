@@ -113,7 +113,11 @@ episRouter.put("/:id", permitir("epis:editar"), async (req, res) => {
     const atualizado = await tx.epi.update({ where: { id }, data: paraBanco(dados) });
     const mudancas = diferencas(antes, formatarEpi(atualizado), CAMPOS_EDITAVEIS);
     if (mudancas) {
-      await registrarLog(req, { acao: "EPI_EDITAR", entidade: "epi", entidadeId: id, detalhes: mudancas }, tx);
+      await registrarLog(
+        req,
+        { acao: "EPI_EDITAR", entidade: "epi", entidadeId: id, detalhes: { descricao: antes.descricao, ...mudancas } },
+        tx,
+      );
     }
     return atualizado;
   });
@@ -131,7 +135,7 @@ episRouter.patch("/:id/ativo", permitir("epis:ativar"), async (req, res) => {
     const atualizado = await tx.epi.update({ where: { id }, data: { ativo } });
     await registrarLog(
       req,
-      { acao: ativo ? "EPI_REATIVAR" : "EPI_DESATIVAR", entidade: "epi", entidadeId: id },
+      { acao: ativo ? "EPI_REATIVAR" : "EPI_DESATIVAR", entidade: "epi", entidadeId: id, detalhes: { descricao: atual.descricao } },
       tx,
     );
     return atualizado;

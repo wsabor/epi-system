@@ -5,8 +5,9 @@ import {
   TrendingUp,
   Eye,
   Edit2,
-  Trash2,
   Package,
+  ToggleLeft,
+  ToggleRight,
   Shield,
   Headphones,
   Glasses,
@@ -15,18 +16,24 @@ import {
   Footprints,
   Shirt,
 } from "lucide-react";
+import { dataLocal } from "../../utils/datas";
 
 const ControleEstoque = ({
   epis,
   onAddEPI,
   onEditEPI,
-  onDeleteEPI,
+  onToggleAtivo,
   onMovimentacao,
   onViewEPI,
+  podeCriar,
+  podeEditar,
+  podeMovimentar,
+  podeAtivar,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterSituacao, setFilterSituacao] = useState("ativos");
 
   // Ícones para as categorias
   const categoriaIcons = {
@@ -43,7 +50,7 @@ const ControleEstoque = ({
   // Função para determinar status do EPI
   const determineEPIStatus = (epi) => {
     const today = new Date();
-    const validadeDate = new Date(epi.dataValidade);
+    const validadeDate = dataLocal(epi.dataValidade);
     const diffDays = Math.ceil((validadeDate - today) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) return "vencido";
@@ -62,10 +69,12 @@ const ControleEstoque = ({
         !filterCategory || epi.categoria === filterCategory;
       const status = determineEPIStatus(epi);
       const matchesStatus = !filterStatus || status === filterStatus;
+      const matchesSituacao =
+        filterSituacao === "todos" || (filterSituacao === "ativos") === epi.ativo;
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory && matchesStatus && matchesSituacao;
     });
-  }, [epis, searchTerm, filterCategory, filterStatus]);
+  }, [epis, searchTerm, filterCategory, filterStatus, filterSituacao]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -99,26 +108,30 @@ const ControleEstoque = ({
           <p className="text-gray-600">Gerenciar EPIs cadastrados</p>
         </div>
         <div className="flex space-x-3">
-          <button
-            onClick={onMovimentacao}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
-          >
-            <TrendingUp size={20} />
-            <span>Movimentação</span>
-          </button>
-          <button
-            onClick={onAddEPI}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2 transition-colors"
-          >
-            <Plus size={20} />
-            <span>Novo EPI</span>
-          </button>
+          {podeMovimentar && (
+            <button
+              onClick={() => onMovimentacao()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+            >
+              <TrendingUp size={20} />
+              <span>Movimentação</span>
+            </button>
+          )}
+          {podeCriar && (
+            <button
+              onClick={onAddEPI}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2 transition-colors"
+            >
+              <Plus size={20} />
+              <span>Novo EPI</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Filtros */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search size={20} className="absolute left-3 top-3 text-gray-400" />
             <input
@@ -151,6 +164,15 @@ const ControleEstoque = ({
             <option value="estoque_baixo">Estoque Baixo</option>
             <option value="vencimento_proximo">Vencimento Próximo</option>
             <option value="vencido">Vencido</option>
+          </select>
+          <select
+            value={filterSituacao}
+            onChange={(e) => setFilterSituacao(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          >
+            <option value="ativos">Somente ativos</option>
+            <option value="inativos">Somente desativados</option>
+            <option value="todos">Ativos e desativados</option>
           </select>
         </div>
       </div>
@@ -191,9 +213,11 @@ const ControleEstoque = ({
                     <Package size={48} className="mx-auto text-gray-300 mb-4" />
                     <p className="text-lg font-medium">Nenhum EPI encontrado</p>
                     <p className="text-sm mt-1">
-                      {searchTerm || filterCategory || filterStatus
+                      {searchTerm || filterCategory || filterStatus || filterSituacao !== "ativos"
                         ? "Tente ajustar os filtros de busca"
-                        : 'Clique em "Novo EPI" para cadastrar'}
+                        : podeCriar
+                          ? 'Clique em "Novo EPI" para cadastrar'
+                          : "Nenhum EPI cadastrado ainda"}
                     </p>
                   </td>
                 </tr>
@@ -205,7 +229,7 @@ const ControleEstoque = ({
                   const badge = getStatusBadge(status);
 
                   return (
-                    <tr key={epi.id} className="hover:bg-gray-50">
+                    <tr key={epi.id} className={epi.ativo ? "hover:bg-gray-50" : "bg-gray-50 opacity-70"}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <IconComponent
@@ -215,6 +239,11 @@ const ControleEstoque = ({
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {epi.descricao}
+                              {!epi.ativo && (
+                                <span className="ml-2 inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">
+                                  Desativado
+                                </span>
+                              )}
                             </div>
                             <div className="text-sm text-gray-500">
                               {epi.marca} • CA {epi.numeroCA}
@@ -241,17 +270,19 @@ const ControleEstoque = ({
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(epi.dataValidade).toLocaleDateString("pt-BR")}
+                        {dataLocal(epi.dataValidade).toLocaleDateString("pt-BR")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => onMovimentacao(epi)}
-                            className="text-blue-600 hover:text-blue-900 p-1"
-                            title="Movimentar"
-                          >
-                            <TrendingUp size={16} />
-                          </button>
+                          {podeMovimentar && epi.ativo && (
+                            <button
+                              onClick={() => onMovimentacao(epi)}
+                              className="text-blue-600 hover:text-blue-900 p-1"
+                              title="Movimentar"
+                            >
+                              <TrendingUp size={16} />
+                            </button>
+                          )}
                           <button
                             onClick={() => onViewEPI(epi)}
                             className="text-green-600 hover:text-green-900 p-1"
@@ -259,20 +290,24 @@ const ControleEstoque = ({
                           >
                             <Eye size={16} />
                           </button>
-                          <button
-                            onClick={() => onEditEPI(epi)}
-                            className="text-yellow-600 hover:text-yellow-900 p-1"
-                            title="Editar"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => onDeleteEPI(epi.id)}
-                            className="text-red-600 hover:text-red-900 p-1"
-                            title="Excluir"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {podeEditar && (
+                            <button
+                              onClick={() => onEditEPI(epi)}
+                              className="text-yellow-600 hover:text-yellow-900 p-1"
+                              title="Editar"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {podeAtivar && (
+                            <button
+                              onClick={() => onToggleAtivo(epi)}
+                              className={`p-1 ${epi.ativo ? "text-gray-600 hover:text-orange-600" : "text-gray-600 hover:text-green-600"}`}
+                              title={epi.ativo ? "Desativar" : "Reativar"}
+                            >
+                              {epi.ativo ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

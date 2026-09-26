@@ -11,10 +11,10 @@ import {
 const ForgotPassword = ({ onToggleLogin }) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { resetPassword } = useAuth();
+  const { esqueciSenha } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,20 +26,12 @@ const ForgotPassword = ({ onToggleLogin }) => {
 
     try {
       setError("");
-      setSuccess(false);
+      setSuccess("");
       setLoading(true);
-      await resetPassword(email);
-      setSuccess(true);
+      // A resposta é a mesma exista ou não o e-mail (não revela quem tem cadastro).
+      setSuccess(await esqueciSenha(email));
     } catch (err) {
-      console.error("Erro ao enviar email:", err);
-
-      if (err.code === "auth/user-not-found") {
-        setError("Email não encontrado");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Email inválido");
-      } else {
-        setError("Erro ao enviar email. Tente novamente");
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -88,11 +80,8 @@ const ForgotPassword = ({ onToggleLogin }) => {
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start">
               <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-green-700">
-                <p className="font-semibold mb-1">Email enviado com sucesso!</p>
-                <p>
-                  Verifique sua caixa de entrada e siga as instruções para
-                  redefinir sua senha.
-                </p>
+                <p className="font-semibold mb-1">Solicitação registrada</p>
+                <p>{success} O link vale por 1 hora.</p>
               </div>
             </div>
           )}

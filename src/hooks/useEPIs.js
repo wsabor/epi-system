@@ -1,82 +1,50 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  subscribeToEPIs,
-  createEPI as createEPIService,
-  updateEPI as updateEPIService,
-  deleteEPI as deleteEPIService,
-} from "../services/epiServices";
+import { api } from "../services/api";
 
+// Traz ativos e inativos; cada tela filtra o que precisa.
 export const useEPIs = () => {
-  const { currentUser } = useAuth();
+  const { usuario } = useAuth();
   const [epis, setEpis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const recarregar = useCallback(async () => {
+    try {
+      setEpis(await api("/epis", { query: { status: "todos" } }));
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const usuarioId = usuario?.id;
   useEffect(() => {
-    // Só iniciar subscription se o usuário estiver autenticado
-    if (!currentUser) {
+    if (!usuarioId) {
       setEpis([]);
       setLoading(false);
       return;
     }
-
-    console.log("🔄 Iniciando subscription de EPIs...");
     setLoading(true);
+    recarregar();
+  }, [usuarioId, recarregar]);
 
-    // Subscrever para atualizações em tempo real
-    const unsubscribe = subscribeToEPIs((episData) => {
-      console.log("✅ EPIs carregados:", episData.length);
-      setEpis(episData);
-      setLoading(false);
-    });
-
-    // Cleanup: cancelar subscription quando componente desmontar
-    return () => {
-      console.log("🛑 Cancelando subscription de EPIs");
-      unsubscribe();
-    };
-  }, [currentUser]); // ← ADICIONADA DEPENDÊNCIA
-
-  const addEPI = async (epiData) => {
-    try {
-      setError(null);
-      await createEPIService(epiData);
-      // O listener atualizará automaticamente a lista
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
+  const addEPI = async (dados) => {
+    await api("/epis", { method: "POST", body: dados });
+    await recarregar();
   };
 
-  const updateEPI = async (id, epiData) => {
-    try {
-      setError(null);
-      await updateEPIService(id, epiData);
-      // O listener atualizará automaticamente a lista
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
+  const updateEPI = async (id, dados) => {
+    await api(`/epis/${id}`, { method: "PUT", body: dados });
+    await recarregar();
   };
 
-  const deleteEPI = async (id) => {
-    try {
-      setError(null);
-      await deleteEPIService(id);
-      // O listener atualizará automaticamente a lista
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
+  const setAtivoEPI = async (id, ativo) => {
+    await api(`/epis/${id}/ativo`, { method: "PATCH", body: { ativo } });
+    await recarregar();
   };
 
-  return {
-    epis,
-    loading,
-    error,
-    addEPI,
-    updateEPI,
-    deleteEPI,
-  };
+  return { epis, loading, error, addEPI, updateEPI, setAtivoEPI, recarregar };
 };

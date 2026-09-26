@@ -53,7 +53,11 @@ usuariosRouter.put("/:id", async (req, res) => {
     const atualizado = await tx.usuario.update({ where: { id }, data: dados });
     const mudancas = diferencas(antes, atualizado, ["nome", "departamento", "telefone", "role"]);
     if (mudancas) {
-      await registrarLog(req, { acao: "USUARIO_EDITAR", entidade: "usuario", entidadeId: id, detalhes: mudancas }, tx);
+      await registrarLog(
+        req,
+        { acao: "USUARIO_EDITAR", entidade: "usuario", entidadeId: id, detalhes: { email: antes.email, ...mudancas } },
+        tx,
+      );
     }
     return atualizado;
   });
@@ -79,7 +83,12 @@ usuariosRouter.patch("/:id/ativo", async (req, res) => {
     });
     await registrarLog(
       req,
-      { acao: ativo ? "USUARIO_REATIVAR" : "USUARIO_DESATIVAR", entidade: "usuario", entidadeId: id },
+      {
+        acao: ativo ? "USUARIO_REATIVAR" : "USUARIO_DESATIVAR",
+        entidade: "usuario",
+        entidadeId: id,
+        detalhes: { nome: atual.nome, email: atual.email },
+      },
       tx,
     );
     return atualizado;

@@ -207,27 +207,48 @@ Schema em [api/prisma/schema.prisma](../api/prisma/schema.prisma). IDs `uuid` v7
 
 ## Fase 5 — Frontend
 
-- [ ] `src/services/api.js`: wrapper de `fetch` (`credentials: "include"`, tratamento de 401 → volta ao login)
-- [ ] [AuthContext.jsx](../src/contexts/AuthContext.jsx) usando `/api/auth/*`; permissões vêm do `/me`
-- [ ] Substituir os `if` de [App.jsx:147-150](../src/App.jsx#L147-L150) por um único `hasPermission` alimentado pelo `/me`; apagar `PermissionsContext.jsx` e `ProtectedAction.jsx` (ou reaproveitar o `ProtectedAction` sobre o novo contexto)
-- [ ] Hooks `useEPIs`, `useMovimentacoes`, `useUsuarios`, `useLogs`: `fetch` + função `recarregar()` chamada após cada ação
-- [ ] `handleSaveMovimentacao` passa a só chamar a API (o cálculo de estoque sai do front)
-- [ ] Controle de Estoque: botão "Excluir" vira "Desativar/Reativar" (só admin); filtro para mostrar inativos; EPI inativo com selo visual e fora da lista do modal de movimentação
-- [ ] Relatórios ([Relatorios.jsx](../src/components/pages/Relatorios.jsx)): admin/operador escolhem tipo e filtros → "Gerar" (salva na API) → veem e exportam PDF/Excel. Todos os perfis têm a lista "Relatórios gerados" (quem gerou, quando, filtros) e abrem o retrato salvo usando os mesmos componentes de exibição. Botões de exportar só aparecem para quem tem a permissão
-- [ ] Usuários: remover o botão de exclusão e o formulário de "criar usuário" (fica só o convite)
-- [ ] Remover `Register.jsx` e a rota de cadastro; no login, link "Solicitar acesso" com `mailto:` lendo `import.meta.env.VITE_EMAIL_SOLICITAR_ACESSO` (#9)
-- [ ] Telas novas: "Esqueci minha senha" apontando para a API e "Redefinir senha" (`/redefinir-senha/:token`)
-- [ ] [ConviteUsuarioModal.jsx](../src/components/modals/ConviteUsuarioModal.jsx) e [AceitarConvite.jsx](../src/components/auth/AceitarConvite.jsx) usando a API; QR Code continua com `qrcode.react`
-- [ ] Remover `firebase`, `@emailjs/browser`, `fs` e `path` do [package.json](../package.json) e apagar [firebase.js](../src/services/firebase.js) e [emailService.js](../src/services/emailService.js)
-- [ ] Trocar o texto "Carregando dados do Firebase..." e referências no [README.md](../README.md)
+- [x] [src/services/api.js](../src/services/api.js): `fetch` com cookie, erros de validação da API viram mensagem legível, 401 em qualquer tela → volta ao login
+- [x] [AuthContext.jsx](../src/contexts/AuthContext.jsx) sobre `/api/auth/*`; `hasPermission()` alimentado pelo `/me` — **uma** fonte de permissões no front (menu, telas e botões)
+- [x] Apagados: `firebase.js`, `emailService.js`, `epiServices.js`, `movimentacaoService.js`, `PermissionsContext.jsx`, `ProtectedAction.jsx`, `Register.jsx`
+- [x] Hooks `useEPIs`, `useMovimentacoes`, `useUsuarios`, `useLogs` + novos `useConvites` e `useOpcoes` (listas do domínio vindas da API); `recarregar()` após cada ação
+- [x] Movimentação: o front só envia o que foi informado; saldo calculado pela API; erros (ex.: estoque insuficiente) aparecem no modal sem fechar; "Movimentar" na linha já traz o EPI escolhido; ajuste = "quantidade contada"
+- [x] Cadastro de EPI com "Quantidade inicial"; na edição a quantidade é só leitura (#11)
+- [x] Controle de Estoque: botões por permissão; "Excluir" → "Desativar/Reativar" (só admin); filtro ativos/desativados/todos; selo "Desativado"
+- [x] Relatórios: exportação só para quem tem `relatorios:exportar`; tela oculta para o visualizador até os relatórios salvos existirem
+- [x] Usuários: sem criar/excluir; edição sem trocar e-mail nem a própria função; lista de convites com status e "Revogar"; "Auditoria geral"
+- [x] Auditoria: filtros e paginação no servidor, rótulos legíveis, "antes → depois", nome do alvo; CSV protegido contra *CSV injection*
+- [x] Login com "Solicitar acesso" (`mailto:` do `.env`) no lugar de "Cadastre-se" (#9); "Esqueci minha senha" e nova tela `/redefinir-senha/:token`; "Alterar senha" no cabeçalho
+- [x] Convite: e-mail enviado pela API na criação; tela final com QR Code, link (exibido uma única vez) e aviso se o e-mail falhou
+- [x] Página "Sobre" e `.env.example` sem Firebase
+- [ ] Remover `firebase`, `@emailjs/browser`, `fs` e `path` do [package.json](../package.json) — **aguardando**: o `package.json` da raiz tem atualizações de dependências do Wagner ainda não commitadas
+- [ ] ~~Relatórios salvos~~ → depois do go-live
+- [ ] README → reescrito na Fase 6 (junto com as instruções de Docker)
+
+**Bugs antigos encontrados e corrigidos no caminho**
+
+- **Fuso horário:** `new Date("2027-03-15")` é meia-noite UTC → no Brasil a tela mostrava 14/03 e "vencido" virava um dia antes. Novo [src/utils/datas.js](../src/utils/datas.js) (`dataLocal`) em todas as telas.
+- **Filtros de período** (Movimentações e Relatórios) excluíam o último dia inteiro e só funcionavam com as duas datas preenchidas.
+- **Tailwind 4 não tem `bg-opacity-*`:** o fundo dos modais era preto sólido. Trocado por `bg-black/50`.
+- **Classes montadas em tempo de execução** (`bg-${cor}-100`) não são geradas pelo Tailwind: cores da auditoria não apareciam.
+- **Movimentação no front "zerava" a saída maior que o estoque** e gravava a quantidade que estava na tela, não a do banco (#1).
+- Botões de editar/movimentar apareciam para o visualizador (só não faziam nada).
+- Aviso do React de input "não controlado → controlado" no modal de movimentação.
+
+**Testes**
+
+- [x] [api/scripts/teste-ui.mjs](../api/scripts/teste-ui.mjs) (`cd api && npm run test:ui`, com API e Vite no ar): **40 verificações no Chrome de verdade** — login, cadastro/edição/movimentação/desativação de EPI, convite → aceite → visualizador com permissões restritas → desativação derruba a sessão, auditoria, alterar senha, logout, esqueci a senha, **zero erro de JavaScript no console**
+- [x] `npm run test:api`: 52/52 continuam passando
+- [x] Lint zerado (API e frontend) e `vite build` ok
 
 ## Fase 6 — Dockerização
 
 - [ ] `api/Dockerfile` (**Node 24** slim, usuário não-root, `prisma generate` no build, `prisma migrate deploy` antes de subir)
 - [ ] `Dockerfile` do frontend: build do Vite → nginx com fallback de SPA (substitui o `rewrites` do [vercel.json](../vercel.json)) e proxy `/api`. Variáveis `VITE_*` entram como *build args* vindos do `.env` da raiz — mudar o e-mail de solicitação exige `docker compose build web`
 - [ ] `docker-compose.yml`: `web`, `api`, `db`; volume nomeado para o Postgres; healthchecks; `restart: unless-stopped`; porta do banco **não** exposta
+- [ ] nginx com cabeçalhos de segurança para o HTML/JS servido: `Content-Security-Policy` (só `'self'`), `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'`, `Strict-Transport-Security` quando houver HTTPS (o `helmet` já cobre as respostas da API, não o front)
 - [ ] `docker compose up` do zero numa máquina limpa sobe tudo e o admin do seed consegue logar
 - [ ] Remover [vercel.json](../vercel.json)
+- [ ] README reescrito: instalação com Docker, `.env`, primeiro acesso — **sem** credenciais de demonstração
 
 ## ~~Fase 7 — Migração dos dados do Firestore~~ (removida)
 
@@ -235,13 +256,13 @@ O sistema nunca foi para produção: o que existe no Firebase são dados de exem
 
 ## Fase 8 — Deploy no Proxmox (go-live)
 
-- [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção (segredos novos, gerados na hora, não os de dev)
-- [ ] Rodar o seed de produção e trocar a senha do admin inicial no primeiro login
-- [ ] HTTPS conforme verificado na Fase 0 (proxy da borda ou Caddy na própria VM)
+- [ ] Subir a stack na VM (preparada na Fase 0), com `.env` de produção: `JWT_SEGREDO` e senha do Postgres **novos e aleatórios**, `NODE_ENV=production`, `COOKIE_SECURE=true`; arquivo com `chmod 600`, dono root
+- [ ] Rodar o seed de produção, trocar a senha do admin inicial no primeiro login e **apagar `ADMIN_INICIAL_SENHA` do `.env`**
+- [ ] **HTTPS obrigatório** (proxy da borda ou Caddy na própria VM) — ver "Revisão de segurança", item 1
 - [ ] **Backup diário com `pg_dump` já no dia 1** (cron na VM) + backup da VM pelo Proxmox (`vzdump`) — governança não fica para depois
 - [ ] Testar os 3 perfis fim a fim, incluindo tentar ações proibidas direto na API (sem passar pela UI)
 - [ ] Cadastrar os EPIs reais e convidar os usuários
-- [ ] Desativar o projeto Firebase e o deploy da Vercel quando quiser (não há dados a preservar)
+- [ ] **Tirar do ar o sistema antigo** (Vercel + projeto Firebase) — ver "Revisão de segurança", item 2
 
 ## Fase 9 — Pós-go-live
 
@@ -249,6 +270,38 @@ O sistema nunca foi para produção: o que existe no Firebase são dados de exem
 - [ ] Testes automatizados da API (começar pela movimentação transacional e pelas permissões)
 - [ ] CI: lint + testes + build das imagens
 - [ ] Reavaliar tempo real (SSE é o mais simples) se fizer falta no Dashboard
+
+---
+
+## Revisão de segurança e arquitetura (26/09/2026)
+
+O sistema original tinha os problemas típicos de um primeiro projeto com Firebase: **toda a regra de negócio e toda a segurança estavam no navegador** — que é justamente o único lugar que o usuário controla. As Fases 2–5 corrigiram isso (tabela de problemas #1–#11). O que ainda falta, por prioridade:
+
+### Antes do go-live (segunda)
+
+1. **HTTPS.** Sem ele, senha e cookie de sessão trafegam em texto puro: qualquer um na mesma rede Wi-Fi do SENAI consegue capturá-los. É o item de segurança mais importante que resta. Caddy na VM resolve em minutos (certificado interno, ou Let's Encrypt se houver domínio público). Com HTTPS: `COOKIE_SECURE=true`.
+2. **Tirar do ar o sistema antigo.** Segundo o README, `epi-system.wsabor.dev` (Vercel) está no ar e público, com cadastro aberto (conferir), e o [README.md](../README.md) publica credenciais de admin (`admin@demo.com` / `demo123`). O projeto Firebase tem regras do Firestore que nunca estiveram no repositório — se forem permissivas, qualquer pessoa lê/escreve no banco dele usando a chave pública que está no bundle. Mesmo com dados falsos, é superfície de ataque (abuso de cota, hospedagem de conteúdo) com o seu nome. Excluir o projeto Firebase e o deploy da Vercel, e tirar as credenciais do README.
+3. **EmailJS:** a *public key* e os IDs de serviço/template estão no histórico do git. No painel do EmailJS, ligar **"Use Private Key"** para que só quem tem a *private key* (que fica só no `.env` da VM) consiga enviar e-mails pela sua conta.
+4. **Segredos de produção** novos e fora do git; `.env` com `chmod 600`; porta do Postgres fechada (já previsto na Fase 6).
+5. **Backup desde o dia 1** (já na Fase 8).
+
+### Depois do go-live
+
+| Prioridade | Item | Por quê |
+|---|---|---|
+| Alta | Trocar `xlsx` 0.18.5 (abandonado no npm, 2 falhas "high") pelo build oficial do SheetJS (`cdn.sheetjs.com`) ou por `exceljs` | As falhas são na *leitura* de planilhas e o sistema só *gera* — risco real baixo, mas o pacote não recebe mais correções |
+| Alta | CI rodando lint + `test:api` + `test:ui` a cada push | Os testes existem; falta rodarem sozinhos |
+| Alta | LGPD: definir retenção dos logs (guardam IP e e-mail) e um aviso de privacidade; nome de quem recebe EPI é dado pessoal (base legal: obrigação da NR-6) | Governança de dados pessoais |
+| Média | **Rotas de verdade** (`react-router`, já instalado): hoje a tela é um `useState`, então F5 volta ao Dashboard e não dá para mandar link de uma tela | Usabilidade e base para crescer |
+| Média | Quebrar [Relatorios.jsx](../src/components/pages/Relatorios.jsx) (~1000 linhas) em um componente por relatório — junto com a funcionalidade de relatórios salvos | Manutenção |
+| Média | Filtros de Movimentações/Relatórios na API (ela já suporta) em vez de baixar as 2000 mais recentes | Escala |
+| Média | Carregar jsPDF/xlsx/recharts só quando usados (`import()`): o bundle tem 1,5 MB | Tempo de carregamento em rede lenta |
+| Baixa | Trocar `alert`/`confirm` do navegador por avisos e modais do próprio sistema | Consistência visual |
+| Baixa | Busca sem acento (`unaccent` no Postgres) | "joao" não acha "João" |
+| Baixa | Tempo de inatividade na sessão (hoje: 8 h fixas) | Computador compartilhado esquecido logado |
+| Baixa | Separar o frontend em `web/` (monorepo `web/` + `api/`) | Organização; não é urgente |
+
+**O que já está bem resolvido** (para não mexer sem motivo): autorização só no servidor com matriz única; sessão em cookie `HttpOnly`/`SameSite=Strict` revalidada a cada request; senhas com bcrypt; tokens de convite/redefinição de 256 bits guardados só como hash e de uso único; limite de tentativas; validação de toda entrada com Zod; histórico imutável garantido pelo próprio banco; auditoria na mesma transação da operação.
 
 ---
 

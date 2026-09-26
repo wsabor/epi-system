@@ -1,79 +1,24 @@
-import { useState, useEffect } from "react";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../services/firebase";
+import { useEffect, useState } from "react";
+import { api } from "../services/api";
 
-export const useLogs = (usuarioId = null) => {
-  const [logs, setLogs] = useState([]);
+// Auditoria é gravada só pela API; aqui apenas se consulta, com filtros aplicados no servidor.
+export const useLogs = (filtros) => {
+  const [resultado, setResultado] = useState({ itens: [], total: 0, totalPaginas: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const chave = JSON.stringify(filtros);
   useEffect(() => {
-    const logsRef = collection(db, "logs");
+    let cancelado = false;
+    setLoading(true);
+    api("/logs", { query: JSON.parse(chave) })
+      .then((dados) => !cancelado && (setResultado(dados), setError(null)))
+      .catch((err) => !cancelado && setError(err.message))
+      .finally(() => !cancelado && setLoading(false));
+    return () => {
+      cancelado = true;
+    };
+  }, [chave]);
 
-    // Query simples sem where para evitar necessidade de índice composto
-    const logsQuery = query(
-      logsRef,
-      orderBy("timestamp", "desc"),
-      limit(1000)
-    );
-
-    const unsubscribe = onSnapshot(
-      logsQuery,
-      (snapshot) => {
-        let logsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Se houver filtro de usuarioId, filtrar no lado do cliente
-        if (usuarioId) {
-          logsData = logsData.filter((log) => log.usuarioId === usuarioId);
-        }
-
-        setLogs(logsData);
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Erro ao carregar logs:", err);
-        setError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [usuarioId]);
-
-  // Adicionar novo log
-  const addLog = async (logData) => {
-    try {
-      const logsRef = collection(db, "logs");
-      const novoLog = {
-        ...logData,
-        timestamp: serverTimestamp(),
-        ip: "192.168.1.100", // Pode ser substituído por IP real se quiser
-      };
-
-      const docRef = await addDoc(logsRef, novoLog);
-      console.log("✅ Log criado com ID:", docRef.id);
-      return docRef.id;
-    } catch (err) {
-      console.error("❌ Erro ao adicionar log:", err);
-      throw err;
-    }
-  };
-
-  return {
-    logs,
-    loading,
-    error,
-    addLog,
-  };
+  return { logs: resultado.itens, total: resultado.total, totalPaginas: resultado.totalPaginas, loading, error };
 };

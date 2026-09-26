@@ -170,7 +170,11 @@ convitesRouter.patch("/:id/revogar", async (req, res) => {
       data: { revogadoEm: new Date() },
       include: { criadoPor: true },
     });
-    await registrarLog(req, { acao: "CONVITE_REVOGAR", entidade: "convite", entidadeId: id }, tx);
+    await registrarLog(
+      req,
+      { acao: "CONVITE_REVOGAR", entidade: "convite", entidadeId: id, detalhes: { email: atual.email } },
+      tx,
+    );
     return atualizado;
   });
 

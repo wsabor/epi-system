@@ -11,14 +11,8 @@ import {
   X,
 } from "lucide-react";
 
-const Sidebar = ({
-  sidebarOpen,
-  setSidebarOpen,
-  currentView,
-  setCurrentView,
-  userRole, // ← CORRIGIDO (estava "useRole")
-}) => {
-  const { logout } = useAuth();
+const Sidebar = ({ sidebarOpen, setSidebarOpen, currentView, setCurrentView }) => {
+  const { logout, hasPermission } = useAuth();
 
   const handleLogout = async () => {
     if (window.confirm("Tem certeza que deseja sair?")) {
@@ -35,14 +29,15 @@ const Sidebar = ({
     setSidebarOpen(false);
   };
 
-  // Itens do menu (sem Usuários, vamos adicionar depois com validação)
+  // Relatórios exige "gerar": até os relatórios salvos existirem, o visualizador não tem o que ver ali.
   const menuItems = [
-    { id: "dashboard", icon: Home, label: "Dashboard" },
-    { id: "estoque", icon: Package, label: "Controle de Estoque" },
-    { id: "movimentacoes", icon: TrendingUp, label: "Movimentações" },
-    { id: "relatorios", icon: FileText, label: "Relatórios" },
+    { id: "dashboard", icon: Home, label: "Dashboard", permissao: "epis:ver" },
+    { id: "estoque", icon: Package, label: "Controle de Estoque", permissao: "epis:ver" },
+    { id: "movimentacoes", icon: TrendingUp, label: "Movimentações", permissao: "movimentacoes:ver" },
+    { id: "relatorios", icon: FileText, label: "Relatórios", permissao: "relatorios:gerar" },
+    { id: "usuarios", icon: Users, label: "Usuários", permissao: "usuarios:gerir" },
     { id: "sobre", icon: Info, label: "Sobre" },
-  ];
+  ].filter((item) => !item.permissao || hasPermission(item.permissao));
 
   return (
     <div
@@ -92,21 +87,6 @@ const Sidebar = ({
             <span className="text-white font-medium">{item.label}</span>
           </button>
         ))}
-
-        {/* Item Usuários - SÓ APARECE SE FOR ADMIN */}
-        {userRole === "admin" && (
-          <button
-            onClick={() => handleMenuClick("usuarios")}
-            className={`w-full flex items-center space-x-3 px-4 py-3 text-left hover:bg-red-500 transition-colors ${
-              currentView === "usuarios"
-                ? "bg-red-500 border-r-4 border-white"
-                : ""
-            }`}
-          >
-            <Users size={20} className="text-white" />
-            <span className="text-white font-medium">Usuários</span>
-          </button>
-        )}
       </nav>
 
       {/* Botão de Sair */}

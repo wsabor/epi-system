@@ -1,116 +1,78 @@
 import React, { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, AlertCircle } from "lucide-react";
+import { useOpcoes } from "../../hooks/useOpcoes";
+
+const FORM_VAZIO = {
+  descricao: "",
+  categoria: "",
+  tamanho: "",
+  quantidadeInicial: "",
+  tipoEstoque: "Peça",
+  marca: "",
+  numeroCA: "",
+  dataValidade: "",
+  valorUnitario: "",
+  fornecedor: "",
+  estoqueMinimo: "",
+  diasAvisoVencimento: "",
+};
 
 const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
-  const [formData, setFormData] = useState({
-    descricao: "",
-    categoria: "",
-    tamanho: "",
-    quantidadeAtual: "",
-    tipoEstoque: "Peça",
-    marca: "",
-    numeroCA: "",
-    dataValidade: "",
-    valorUnitario: "",
-    fornecedor: "",
-    estoqueMinimo: "",
-    diasAvisoVencimento: "",
-  });
+  const opcoes = useOpcoes();
+  const [formData, setFormData] = useState(FORM_VAZIO);
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
-  // Categorias disponíveis
-  const categorias = [
-    "Proteção Respiratória",
-    "Proteção Auditiva",
-    "Proteção Visual",
-    "Capacetes",
-    "Luvas",
-    "Calçados de Segurança",
-    "Uniformes",
-    "Outros",
-  ];
-
-  // Tipos de estoque
-  const tiposEstoque = ["Peça", "Par", "Kit", "Metro", "Litro"];
+  const categorias = opcoes?.categorias ?? [];
+  const tiposEstoque = opcoes?.tiposEstoque ?? [];
 
   // Atualizar formulário quando EPI mudar
   useEffect(() => {
-    if (epi) {
-      setFormData({
-        descricao: epi.descricao || "",
-        categoria: epi.categoria || "",
-        tamanho: epi.tamanho || "",
-        quantidadeAtual: epi.quantidadeAtual || "",
-        tipoEstoque: epi.tipoEstoque || "Peça",
-        marca: epi.marca || "",
-        numeroCA: epi.numeroCA || "",
-        dataValidade: epi.dataValidade || "",
-        valorUnitario: epi.valorUnitario || "",
-        fornecedor: epi.fornecedor || "",
-        estoqueMinimo: epi.estoqueMinimo || "",
-        diasAvisoVencimento: epi.diasAvisoVencimento || "",
-      });
-    } else {
-      // Resetar formulário para novo EPI
-      setFormData({
-        descricao: "",
-        categoria: "",
-        tamanho: "",
-        quantidadeAtual: "",
-        tipoEstoque: "Peça",
-        marca: "",
-        numeroCA: "",
-        dataValidade: "",
-        valorUnitario: "",
-        fornecedor: "",
-        estoqueMinimo: "",
-        diasAvisoVencimento: "",
-      });
-    }
+    setErro("");
+    setFormData(
+      epi
+        ? {
+            ...FORM_VAZIO,
+            ...Object.fromEntries(Object.keys(FORM_VAZIO).map((campo) => [campo, epi[campo] ?? ""])),
+            quantidadeInicial: "",
+          }
+        : FORM_VAZIO,
+    );
   }, [epi, isOpen]);
 
-  // Obter opções de tamanho baseado na categoria
-  const getTamanhosOptions = () => {
-    switch (formData.categoria) {
-      case "Uniformes":
-        return ["PP", "P", "M", "G", "GG", "XG"];
-      case "Calçados de Segurança":
-        return Array.from({ length: 15 }, (_, i) => (34 + i).toString());
-      default:
-        return ["Único"];
-    }
-  };
+  const getTamanhosOptions = () => opcoes?.tamanhosPorCategoria[formData.categoria] ?? [];
 
   // Resetar tamanho quando categoria mudar
   useEffect(() => {
-    if (formData.categoria) {
-      const tamanhos = getTamanhosOptions();
+    if (formData.categoria && opcoes) {
+      const tamanhos = opcoes.tamanhosPorCategoria[formData.categoria] ?? [];
       if (!tamanhos.includes(formData.tamanho)) {
-        setFormData((prev) => ({ ...prev, tamanho: "" }));
+        setFormData((prev) => ({ ...prev, tamanho: tamanhos.length === 1 ? tamanhos[0] : "" }));
       }
     }
-  }, [formData.categoria]);
+  }, [formData.categoria, formData.tamanho, opcoes]);
 
-  // Submeter formulário
-  const handleSubmit = (e) => {
+  // Submeter formulário: a quantidade não vai na edição (estoque só muda por movimentação).
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const epiData = {
-      ...formData,
-      quantidadeAtual: parseInt(formData.quantidadeAtual) || 0,
+    const { quantidadeInicial, ...campos } = formData;
+    const dados = {
+      ...campos,
       valorUnitario: parseFloat(formData.valorUnitario) || 0,
       estoqueMinimo: parseInt(formData.estoqueMinimo) || 0,
       diasAvisoVencimento: parseInt(formData.diasAvisoVencimento) || 0,
+      ...(!epi && { quantidadeInicial: parseInt(quantidadeInicial) || 0 }),
     };
 
-    if (epi) {
-      // Editar EPI existente
-      onSave({ id: epi.id, ...epiData });
-    } else {
-      // Criar novo EPI
-      onSave(epiData);
+    setErro("");
+    setSalvando(true);
+    try {
+      await onSave(dados);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setSalvando(false);
     }
-
-    onClose();
   };
 
   // Fechar com ESC
@@ -129,7 +91,7 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
@@ -148,6 +110,12 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {erro && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-red-700">{erro}</span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Descrição */}
             <div className="md:col-span-2">
@@ -237,22 +205,34 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
               </select>
             </div>
 
-            {/* Quantidade Atual */}
+            {/* Quantidade: inicial no cadastro; na edição só por movimentação */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantidade Atual <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                required
-                min="0"
-                value={formData.quantidadeAtual}
-                onChange={(e) =>
-                  setFormData({ ...formData, quantidadeAtual: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="0"
-              />
+              {epi ? (
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade Atual</label>
+                  <input
+                    type="number"
+                    value={epi.quantidadeAtual}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Para alterar o estoque, registre uma movimentação.</p>
+                </>
+              ) : (
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade Inicial</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.quantidadeInicial}
+                    onChange={(e) => setFormData({ ...formData, quantidadeInicial: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Fica registrada como entrada de estoque inicial.</p>
+                </>
+              )}
             </div>
 
             {/* Estoque Mínimo */}
@@ -396,10 +376,11 @@ const EPIModal = ({ isOpen, onClose, epi = null, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+              disabled={salvando}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
             >
               <Save size={16} />
-              <span>{epi ? "Salvar Alterações" : "Cadastrar EPI"}</span>
+              <span>{salvando ? "Salvando..." : epi ? "Salvar Alterações" : "Cadastrar EPI"}</span>
             </button>
           </div>
         </form>

@@ -48,15 +48,11 @@ const MovimentacaoDetalhesModal = ({ isOpen, onClose, movimentacao }) => {
 
   const formatarData = (data) => {
     if (!data) return "N/A";
-    // Se for Timestamp do Firebase
-    if (data?.toDate) {
-      return data.toDate().toLocaleString("pt-BR");
-    }
     return new Date(data).toLocaleString("pt-BR");
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
@@ -156,21 +152,11 @@ const MovimentacaoDetalhesModal = ({ isOpen, onClose, movimentacao }) => {
               <div className="flex items-center space-x-2 mb-2">
                 <TrendingUp size={18} className="text-gray-500" />
                 <span className="text-sm font-medium text-gray-600">
-                  Quantidade Atual
+                  Saldo após a movimentação
                 </span>
               </div>
               <span className="text-2xl font-bold text-green-600">
-                {movimentacao.tipo === "entrada"
-                  ? (movimentacao.quantidadeAnterior || 0) +
-                    (movimentacao.quantidade || 0)
-                  : movimentacao.tipo === "saida" ||
-                    movimentacao.tipo === "perda"
-                  ? Math.max(
-                      0,
-                      (movimentacao.quantidadeAnterior || 0) -
-                        (movimentacao.quantidade || 0)
-                    )
-                  : movimentacao.quantidade || 0}
+                {movimentacao.quantidadeNova}
               </span>
             </div>
           </div>
@@ -245,14 +231,10 @@ const MovimentacaoDetalhesModal = ({ isOpen, onClose, movimentacao }) => {
                   {movimentacao.epiId || "N/A"}
                 </span>
               </div>
-              {movimentacao.userId && (
-                <div className="md:col-span-2">
-                  <span className="text-gray-500">ID do Usuário:</span>
-                  <span className="ml-2 text-gray-900 font-mono">
-                    {movimentacao.userId}
-                  </span>
-                </div>
-              )}
+              <div className="md:col-span-2">
+                <span className="text-gray-500">Registrada no sistema por:</span>
+                <span className="ml-2 text-gray-900">{movimentacao.usuarioNome}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { X, Package, Calendar, DollarSign, AlertTriangle } from "lucide-react";
+import { dataLocal } from "../../utils/datas";
 
 const EPIDetalhesModal = ({ isOpen, onClose, epi }) => {
   if (!isOpen || !epi) return null;
@@ -7,7 +8,7 @@ const EPIDetalhesModal = ({ isOpen, onClose, epi }) => {
   // Função para determinar status
   const determineEPIStatus = (epi) => {
     const today = new Date();
-    const validadeDate = new Date(epi.dataValidade);
+    const validadeDate = dataLocal(epi.dataValidade);
     const diffDays = Math.ceil((validadeDate - today) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0)
@@ -35,7 +36,7 @@ const EPIDetalhesModal = ({ isOpen, onClose, epi }) => {
   const valorTotal = (epi.quantidadeAtual * epi.valorUnitario).toFixed(2);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-red-50">
@@ -128,7 +129,7 @@ const EPIDetalhesModal = ({ isOpen, onClose, epi }) => {
               <div>
                 <p className="text-xs text-yellow-700 mb-1">Data de Validade</p>
                 <p className="text-lg font-bold text-yellow-900">
-                  {new Date(epi.dataValidade).toLocaleDateString("pt-BR")}
+                  {dataLocal(epi.dataValidade).toLocaleDateString("pt-BR")}
                 </p>
               </div>
               <div>

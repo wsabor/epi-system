@@ -1,91 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, AlertCircle } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useOpcoes } from "../../hooks/useOpcoes";
 
-const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
-  const [formData, setFormData] = useState({
-    epiId: "",
-    tipoMovimentacao: "",
-    quantidade: "",
-    responsavel: currentUser?.nome || "",
-    funcionarioRecebeu: "",
-    motivo: "",
-    observacoes: "",
-  });
+const MOTIVO_ENTREGA = "Entrega para funcionário";
 
-  // Opções de motivo por tipo de movimentação
-  const motivosPorTipo = {
-    entrada: [
-      "Compra de novos EPIs",
-      "Devolução de EPI não utilizado",
-      "Doação recebida",
-      "Transferência de outro setor",
-      "Outros",
-    ],
-    saida: [
-      "Entrega para funcionário",
-      "Substituição de EPI danificado",
-      "Transferência para outro setor",
-      "Empréstimo temporário",
-      "Outros",
-    ],
-    ajuste: [
-      "Correção de inventário",
-      "Erro de contagem",
-      "Diferença de estoque",
-      "Recontagem",
-      "Outros",
-    ],
-    perda: [
-      "EPI danificado/avariado",
-      "Extravio/perda",
-      "Vencimento/validade expirada",
-      "Descarte por má qualidade",
-      "Outros",
-    ],
-  };
+const FORM_VAZIO = {
+  epiId: "",
+  tipoMovimentacao: "",
+  quantidade: "",
+  responsavel: "",
+  funcionarioRecebeu: "",
+  motivo: "",
+  observacoes: "",
+};
 
-  // Resetar form quando abrir
-  useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        epiId: "",
-        tipoMovimentacao: "",
-        quantidade: "",
-        responsavel: currentUser?.nome || "",
-        funcionarioRecebeu: "",
-        motivo: "",
-        observacoes: "",
-      });
-    }
-  }, [isOpen, currentUser]);
+// Montado só enquanto aberto (o App o renderiza condicionalmente): o estado nasce pronto a cada abertura.
+// epis: só os ativos. epiInicial: EPI já escolhido quando o modal é aberto a partir da linha da tabela.
+const MovimentacaoModal = ({ isOpen, onClose, epis, epiInicial, onSave }) => {
+  const { usuario } = useAuth();
+  const opcoes = useOpcoes();
+  const motivosPorTipo = opcoes?.motivosPorTipo ?? {};
 
-  const handleSubmit = (e) => {
+  const [formData, setFormData] = useState(() => ({
+    ...FORM_VAZIO,
+    epiId: epiInicial?.id ?? "",
+    responsavel: usuario?.nome ?? "",
+  }));
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  // O saldo é calculado pela API; aqui só se envia o que foi informado.
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const epiSelecionado = epis.find((epi) => epi.id === formData.epiId);
-
-    if (!epiSelecionado) {
-      alert("Selecione um EPI válido");
-      return;
+    setErro("");
+    setSalvando(true);
+    try {
+      await onSave({
+        epiId: formData.epiId,
+        tipo: formData.tipoMovimentacao,
+        quantidade: parseInt(formData.quantidade),
+        responsavel: formData.responsavel,
+        funcionarioRecebeu: formData.tipoMovimentacao === "saida" ? formData.funcionarioRecebeu : undefined,
+        motivo: formData.motivo,
+        observacoes: formData.observacoes,
+      });
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setSalvando(false);
     }
-
-    const movimentacao = {
-      id: Date.now(),
-      epiId: formData.epiId,
-      epiDescricao: epiSelecionado.descricao,
-      tipo: formData.tipoMovimentacao,
-      quantidade: parseInt(formData.quantidade),
-      quantidadeAnterior: epiSelecionado.quantidadeAtual,
-      responsavel: formData.responsavel,
-      funcionarioRecebeu: formData.funcionarioRecebeu,
-      motivo: formData.motivo,
-      observacoes: formData.observacoes,
-      data: new Date().toISOString(),
-      userId: "user-123",
-    };
-
-    onSave(movimentacao, epiSelecionado);
-    onClose();
   };
 
   // Fechar com ESC
@@ -107,7 +71,7 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
   const motivosDisponiveis = motivosPorTipo[formData.tipoMovimentacao] || [];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
@@ -126,6 +90,12 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {erro && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-red-700">{erro}</span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* EPI */}
             <div className="md:col-span-2">
@@ -178,16 +148,18 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
             {/* Quantidade */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantidade <span className="text-red-500">*</span>
+                {formData.tipoMovimentacao === "ajuste" ? "Quantidade contada (novo saldo)" : "Quantidade"}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 required
-                min="1"
+                step="1"
+                min={formData.tipoMovimentacao === "ajuste" ? "0" : "1"}
                 max={
-                  formData.tipoMovimentacao === "ajuste"
-                    ? undefined
-                    : epiSelecionado?.quantidadeAtual
+                  ["saida", "perda"].includes(formData.tipoMovimentacao)
+                    ? epiSelecionado?.quantidadeAtual
+                    : undefined
                 }
                 value={formData.quantidade}
                 onChange={(e) =>
@@ -226,9 +198,12 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Funcionário que Recebeu
+                  {formData.motivo === MOTIVO_ENTREGA && <span className="text-red-500"> *</span>}
                 </label>
                 <input
                   type="text"
+                  required={formData.motivo === MOTIVO_ENTREGA}
+                  maxLength={150}
                   value={formData.funcionarioRecebeu}
                   onChange={(e) =>
                     setFormData({
@@ -322,10 +297,11 @@ const MovimentacaoModal = ({ isOpen, onClose, epis, currentUser, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+              disabled={salvando}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
             >
               <Save size={16} />
-              <span>Registrar Movimentação</span>
+              <span>{salvando ? "Registrando..." : "Registrar Movimentação"}</span>
             </button>
           </div>
         </form>
